@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { toggleSidebar } from "$lib/stores/sidebar";
-  import { BUILTIN_THEMES, setTheme } from "$lib/stores/theme";
+  import { getAllThemes, setTheme } from "$lib/stores/theme";
   import { CalendarDays, Network, Search, FileText, PanelLeft, Palette, CheckSquare, Home, Keyboard, ArrowLeft } from "lucide-svelte";
 
   interface Command {
@@ -121,7 +121,7 @@
   ];
 
   let themeCommands = $derived(
-    BUILTIN_THEMES.map((t) => ({
+    getAllThemes().map((t) => ({
       id: `theme-${t.slug}`,
       title: t.name,
       description: t.slug,

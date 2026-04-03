@@ -4,7 +4,7 @@
   import EditorLayout from "$lib/components/editor/EditorLayout.svelte";
   import BacklinkPanel from "$lib/components/editor/BacklinkPanel.svelte";
   import TagEditor from "$lib/components/editor/TagEditor.svelte";
-  import { BUILTIN_THEMES } from "$lib/stores/theme";
+  import { getAllThemes } from "$lib/stores/theme";
   import { FileText, Palette } from "lucide-svelte";
 
   interface NoteData {
@@ -36,7 +36,7 @@
   // Scoped note theme CSS
   let noteThemeStyle = $derived(() => {
     if (!noteThemeSlug) return "";
-    const theme = BUILTIN_THEMES.find((t) => t.slug === noteThemeSlug);
+    const theme = getAllThemes().find((t) => t.slug === noteThemeSlug);
     if (!theme) return "";
     const c = theme.colors;
     return [
@@ -258,7 +258,7 @@
             >
               デフォルト {!noteThemeSlug ? "✓" : ""}
             </button>
-            {#each BUILTIN_THEMES as theme}
+            {#each getAllThemes() as theme}
               <button
                 onclick={() => setNoteTheme(theme.slug)}
                 class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-text-muted hover:bg-bg-card-hover"

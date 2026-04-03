@@ -2,8 +2,14 @@
   import FileTree from "./FileTree.svelte";
   import { ChevronRight, ChevronDown, FileText, Folder, Trash2, Pencil, FolderX } from "lucide-svelte";
   import { goto } from "$app/navigation";
-  import { BUILTIN_THEMES } from "$lib/stores/theme";
-  import type { VaultFileEntry } from "$lib/server/fs/vault.js";
+  import { getAllThemes } from "$lib/stores/theme";
+
+  interface VaultFileEntry {
+    name: string;
+    path: string;
+    isDirectory: boolean;
+    children?: VaultFileEntry[];
+  }
 
   interface Props {
     entries: VaultFileEntry[];
@@ -22,7 +28,7 @@
   function getThemeColor(path: string): string | null {
     const slug = noteThemes.get(path);
     if (!slug) return null;
-    const theme = BUILTIN_THEMES.find((t) => t.slug === slug);
+    const theme = getAllThemes().find((t) => t.slug === slug);
     return theme?.colors.primary ?? null;
   }
 

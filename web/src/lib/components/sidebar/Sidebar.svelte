@@ -3,7 +3,12 @@
   import FileTree from "./FileTree.svelte";
   import TagList from "./TagList.svelte";
   import { Home, CalendarDays, Network, CheckSquare, Search, Plus, X, FolderPlus, HardDrive } from "lucide-svelte";
-  import type { VaultFileEntry } from "$lib/server/fs/vault.js";
+  interface VaultFileEntry {
+    name: string;
+    path: string;
+    isDirectory: boolean;
+    children?: VaultFileEntry[];
+  }
 
   interface Props {
     vaultPath?: string;
