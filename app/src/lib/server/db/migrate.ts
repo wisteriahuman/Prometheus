@@ -67,48 +67,6 @@ sqlite.exec(`
   )
 `);
 
-// Auth tables
-sqlite.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT NOT NULL UNIQUE,
-    display_name TEXT NOT NULL,
-    password_hash TEXT NOT NULL,
-    created_at INTEGER NOT NULL
-  )
-`);
-
-sqlite.exec(`
-  CREATE TABLE IF NOT EXISTS sessions (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    expires_at INTEGER NOT NULL
-  )
-`);
-
-// Workspace tables
-sqlite.exec(`
-  CREATE TABLE IF NOT EXISTS workspaces (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    vault_path TEXT NOT NULL,
-    engine TEXT NOT NULL DEFAULT 'sqlite',
-    db_url TEXT,
-    theme TEXT,
-    created_at INTEGER NOT NULL,
-    owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE
-  )
-`);
-
-sqlite.exec(`
-  CREATE TABLE IF NOT EXISTS workspace_members (
-    workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
-    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role TEXT NOT NULL DEFAULT 'editor',
-    PRIMARY KEY (workspace_id, user_id)
-  )
-`);
-
 // FTS5 virtual table for full-text search
 sqlite.exec(`
   CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(
@@ -126,8 +84,6 @@ sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_note ON tasks(note_id)`);
 sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed)`);
 sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_note_tags_note ON note_tags(note_id)`);
 sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_note_tags_tag ON note_tags(tag_id)`);
-sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)`);
-sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_workspaces_owner ON workspaces(owner_id)`);
 
 console.log("Database migrated successfully:", DB_PATH);
 sqlite.close();

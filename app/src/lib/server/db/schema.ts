@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 export const notes = sqliteTable("notes", {
   id: text("id").primaryKey(),
@@ -47,50 +47,3 @@ export const tasks = sqliteTable("tasks", {
   lineNumber: integer("line_number").notNull(),
   dueDate: text("due_date"),
 });
-
-// Auth tables
-
-export const users = sqliteTable("users", {
-  id: text("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  displayName: text("display_name").notNull(),
-  passwordHash: text("password_hash").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-});
-
-export const sessions = sqliteTable("sessions", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
-});
-
-// Workspace tables
-
-export const workspaces = sqliteTable("workspaces", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  vaultPath: text("vault_path").notNull(),
-  engine: text("engine").notNull().default("sqlite"),
-  dbUrl: text("db_url"),
-  theme: text("theme"),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  ownerId: text("owner_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-});
-
-export const workspaceMembers = sqliteTable(
-  "workspace_members",
-  {
-    workspaceId: text("workspace_id")
-      .notNull()
-      .references(() => workspaces.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    role: text("role").notNull().default("editor"),
-  },
-  (table) => [primaryKey({ columns: [table.workspaceId, table.userId] })],
-);

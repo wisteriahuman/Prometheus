@@ -8,7 +8,7 @@
   import { sidebarOpen, toggleSidebar } from "$lib/stores/sidebar";
   import { initTheme } from "$lib/stores/theme";
   import { goto } from "$app/navigation";
-  import { Menu, Search, Command, LogOut, LogIn, User } from "lucide-svelte";
+  import { Menu } from "lucide-svelte";
 
   let { children, data } = $props();
 
@@ -100,30 +100,6 @@
           <kbd class="font-mono text-[10px]">⌘K</kbd>
           <span class="hidden sm:inline">コマンド</span>
         </button>
-
-        {#if data.user}
-          <div class="flex items-center gap-1.5 border-l border-border pl-2">
-            <User size={13} />
-            <span class="text-text-muted">{data.user.displayName}</span>
-            <form method="POST" action="/auth/logout">
-              <button
-                type="submit"
-                class="rounded-md p-1 text-text-dim transition-colors hover:text-text-muted"
-                title="ログアウト"
-              >
-                <LogOut size={13} />
-              </button>
-            </form>
-          </div>
-        {:else}
-          <a
-            href="/auth/login"
-            class="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 transition-colors hover:border-text-dim hover:text-text-muted"
-          >
-            <LogIn size={13} />
-            <span>ログイン</span>
-          </a>
-        {/if}
       </div>
     </header>
 

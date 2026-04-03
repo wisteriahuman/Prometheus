@@ -22,7 +22,7 @@ cd prometheus
 pnpm install
 ```
 
-### ノートの保存先を設定
+### 環境変数の設定（必須）
 
 ```bash
 cd app
@@ -39,17 +39,19 @@ PROMETHEUS_VAULT_PATH=~/my-notes
 PROMETHEUS_VAULT_PATH=./vault
 ```
 
+> **Note**: `.env` ファイルの設定は必須です。`PROMETHEUS_VAULT_PATH` が未設定の場合、デフォルトの `./vault` が使用されます。
+
 ### 起動
 
 ```bash
-# データベース初期化（初回のみ）
+# データベーススキーマ作成（初回のみ）
 pnpm --filter app run db:migrate
 
 # 開発サーバー起動
 pnpm --filter app run dev
 ```
 
-http://localhost:5173 でアクセス。初回起動時にサンプルノートが自動生成されます。
+http://localhost:5173 でアクセス。`db:migrate` でSQLiteスキーマが作成され、サーバー起動時のスタートアップフックで全ノートのインデックスが自動構築されます。初回起動時にサンプルノートが自動生成されます。
 
 ## 本番デプロイ（Mac mini等）
 
@@ -96,7 +98,9 @@ nvim ~/my-notes/new-idea.md
 ## 技術スタック
 
 - SvelteKit + Tailwind CSS v4
+- Node.js + pnpm
 - CodeMirror 6 (Vimモード)
-- SQLite (FTS5全文検索)
+- SQLite (better-sqlite3 + FTS5全文検索)
+- Drizzle ORM
 - D3.js (グラフビュー)
 - Mermaid (図表描画)
