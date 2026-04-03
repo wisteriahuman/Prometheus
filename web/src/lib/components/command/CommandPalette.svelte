@@ -118,6 +118,17 @@
         window.dispatchEvent(new CustomEvent("prometheus:shortcuts"));
       },
     },
+    {
+      id: "create-theme",
+      title: "カスタムテーマを作成",
+      description: "自分だけのテーマを作る",
+      category: "外観",
+      icon: Palette,
+      action: () => {
+        onclose();
+        window.dispatchEvent(new CustomEvent("prometheus:create-theme"));
+      },
+    },
   ];
 
   let themeCommands = $derived(

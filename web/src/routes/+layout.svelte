@@ -5,6 +5,7 @@
   import SearchModal from "$lib/components/search/SearchModal.svelte";
   import CommandPalette from "$lib/components/command/CommandPalette.svelte";
   import ShortcutHelp from "$lib/components/ui/ShortcutHelp.svelte";
+  import ThemeCreator from "$lib/components/ui/ThemeCreator.svelte";
   import { sidebarOpen, toggleSidebar } from "$lib/stores/sidebar";
   import { initTheme } from "$lib/stores/theme";
   import { goto } from "$app/navigation";
@@ -16,6 +17,7 @@
   let searchMode = $state<"search" | "switcher">("search");
   let commandPaletteOpen = $state(false);
   let shortcutHelpOpen = $state(false);
+  let themeCreatorOpen = $state(false);
   let vaultPath = $state("");
 
   onMount(async () => {
@@ -32,14 +34,18 @@
     const handleSwitcher = () => { searchMode = "switcher"; searchOpen = true; };
     const handleShortcuts = () => { shortcutHelpOpen = true; };
 
+    const handleCreateTheme = () => { themeCreatorOpen = true; };
+
     window.addEventListener("prometheus:search", handleSearch);
     window.addEventListener("prometheus:switcher", handleSwitcher);
     window.addEventListener("prometheus:shortcuts", handleShortcuts);
+    window.addEventListener("prometheus:create-theme", handleCreateTheme);
 
     return () => {
       window.removeEventListener("prometheus:search", handleSearch);
       window.removeEventListener("prometheus:switcher", handleSwitcher);
       window.removeEventListener("prometheus:shortcuts", handleShortcuts);
+      window.removeEventListener("prometheus:create-theme", handleCreateTheme);
     };
   });
 
@@ -128,4 +134,9 @@
 <ShortcutHelp
   open={shortcutHelpOpen}
   onclose={() => (shortcutHelpOpen = false)}
+/>
+
+<ThemeCreator
+  open={themeCreatorOpen}
+  onclose={() => (themeCreatorOpen = false)}
 />
