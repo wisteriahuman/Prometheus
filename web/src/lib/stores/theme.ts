@@ -28,8 +28,7 @@ export interface PrometheusTheme {
 export const BUILTIN_THEMES: PrometheusTheme[] = [
   // --- Dark themes ---
   {
-    slug: "prometheus",
-    name: "Prometheus",
+    slug: "prometheus", name: "Prometheus",
     colors: {
       bgDark: "#0f172a", bgCard: "#1e293b", bgCardHover: "#334155",
       primary: "#6366f1", primaryLight: "#818cf8", primaryDark: "#4f46e5",
@@ -39,8 +38,7 @@ export const BUILTIN_THEMES: PrometheusTheme[] = [
     },
   },
   {
-    slug: "ocean",
-    name: "Ocean",
+    slug: "ocean", name: "Ocean",
     colors: {
       bgDark: "#0c1222", bgCard: "#162032", bgCardHover: "#1e2d45",
       primary: "#0ea5e9", primaryLight: "#38bdf8", primaryDark: "#0284c7",
@@ -50,8 +48,7 @@ export const BUILTIN_THEMES: PrometheusTheme[] = [
     },
   },
   {
-    slug: "forest",
-    name: "Forest",
+    slug: "forest", name: "Forest",
     colors: {
       bgDark: "#0f1a0f", bgCard: "#1a2e1a", bgCardHover: "#243824",
       primary: "#22c55e", primaryLight: "#4ade80", primaryDark: "#16a34a",
@@ -61,8 +58,7 @@ export const BUILTIN_THEMES: PrometheusTheme[] = [
     },
   },
   {
-    slug: "sakura",
-    name: "Sakura",
+    slug: "sakura", name: "Sakura",
     colors: {
       bgDark: "#1a0f18", bgCard: "#2e1a2a", bgCardHover: "#3d2438",
       primary: "#ec4899", primaryLight: "#f472b6", primaryDark: "#db2777",
@@ -72,8 +68,7 @@ export const BUILTIN_THEMES: PrometheusTheme[] = [
     },
   },
   {
-    slug: "nord",
-    name: "Nord",
+    slug: "nord", name: "Nord",
     colors: {
       bgDark: "#2e3440", bgCard: "#3b4252", bgCardHover: "#434c5e",
       primary: "#88c0d0", primaryLight: "#8fbcbb", primaryDark: "#5e81ac",
@@ -83,8 +78,7 @@ export const BUILTIN_THEMES: PrometheusTheme[] = [
     },
   },
   {
-    slug: "solarized-dark",
-    name: "Solarized Dark",
+    slug: "solarized-dark", name: "Solarized Dark",
     colors: {
       bgDark: "#002b36", bgCard: "#073642", bgCardHover: "#0a4050",
       primary: "#268bd2", primaryLight: "#2aa198", primaryDark: "#1a6fb5",
@@ -94,21 +88,18 @@ export const BUILTIN_THEMES: PrometheusTheme[] = [
     },
   },
   {
-    slug: "midnight",
-    name: "Midnight",
+    slug: "midnight", name: "Midnight",
     colors: {
       bgDark: "#0a0a0f", bgCard: "#12121a", bgCardHover: "#1a1a25",
       primary: "#a78bfa", primaryLight: "#c4b5fd", primaryDark: "#7c3aed",
       accent: "#f472b6", accentLight: "#f9a8d4",
-      textMain: "#e8e8f0", textMuted: "#9898b0", textDim: "#5858708",
+      textMain: "#e8e8f0", textMuted: "#9898b0", textDim: "#585870",
       border: "#22222e", success: "#34d399", warning: "#fbbf24", error: "#f87171",
     },
   },
-
   // --- Light themes ---
   {
-    slug: "light",
-    name: "Light",
+    slug: "light", name: "Light",
     colors: {
       bgDark: "#ffffff", bgCard: "#f8fafc", bgCardHover: "#f1f5f9",
       primary: "#4f46e5", primaryLight: "#6366f1", primaryDark: "#4338ca",
@@ -118,8 +109,7 @@ export const BUILTIN_THEMES: PrometheusTheme[] = [
     },
   },
   {
-    slug: "solarized-light",
-    name: "Solarized Light",
+    slug: "solarized-light", name: "Solarized Light",
     colors: {
       bgDark: "#fdf6e3", bgCard: "#eee8d5", bgCardHover: "#e8e1cc",
       primary: "#268bd2", primaryLight: "#2aa198", primaryDark: "#1a6fb5",
@@ -128,11 +118,9 @@ export const BUILTIN_THEMES: PrometheusTheme[] = [
       border: "#d6cdb5", success: "#859900", warning: "#b58900", error: "#dc322f",
     },
   },
-
   // --- Business themes ---
   {
-    slug: "corporate",
-    name: "Corporate",
+    slug: "corporate", name: "Corporate",
     colors: {
       bgDark: "#f9fafb", bgCard: "#ffffff", bgCardHover: "#f3f4f6",
       primary: "#1f2937", primaryLight: "#374151", primaryDark: "#111827",
@@ -142,8 +130,7 @@ export const BUILTIN_THEMES: PrometheusTheme[] = [
     },
   },
   {
-    slug: "slate",
-    name: "Slate Business",
+    slug: "slate", name: "Slate Business",
     colors: {
       bgDark: "#1e293b", bgCard: "#273548", bgCardHover: "#334155",
       primary: "#3b82f6", primaryLight: "#60a5fa", primaryDark: "#2563eb",
@@ -153,8 +140,7 @@ export const BUILTIN_THEMES: PrometheusTheme[] = [
     },
   },
   {
-    slug: "executive",
-    name: "Executive",
+    slug: "executive", name: "Executive",
     colors: {
       bgDark: "#fafaf9", bgCard: "#ffffff", bgCardHover: "#f5f5f4",
       primary: "#78716c", primaryLight: "#a8a29e", primaryDark: "#57534e",
@@ -165,67 +151,46 @@ export const BUILTIN_THEMES: PrometheusTheme[] = [
   },
 ];
 
-const STORAGE_KEY = "prometheus-theme";
-const CUSTOM_THEMES_KEY = "prometheus-custom-themes";
-
-function loadCustomThemes(): PrometheusTheme[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const data = localStorage.getItem(CUSTOM_THEMES_KEY);
-    if (!data) return [];
-    const themes = JSON.parse(data) as PrometheusTheme[];
-    return themes.map((t) => ({ ...t, isCustom: true }));
-  } catch {
-    return [];
-  }
-}
-
-function saveCustomThemes(themes: PrometheusTheme[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(CUSTOM_THEMES_KEY, JSON.stringify(themes));
-}
+// Custom themes stored in vault
+let customThemes: PrometheusTheme[] = [];
 
 export function getAllThemes(): PrometheusTheme[] {
-  return [...BUILTIN_THEMES, ...loadCustomThemes()];
-}
-
-export function addCustomTheme(theme: PrometheusTheme): void {
-  const customs = loadCustomThemes();
-  const existing = customs.findIndex((t) => t.slug === theme.slug);
-  if (existing >= 0) {
-    customs[existing] = { ...theme, isCustom: true };
-  } else {
-    customs.push({ ...theme, isCustom: true });
-  }
-  saveCustomThemes(customs);
-}
-
-export function removeCustomTheme(slug: string): void {
-  const customs = loadCustomThemes().filter((t) => t.slug !== slug);
-  saveCustomThemes(customs);
+  return [...BUILTIN_THEMES, ...customThemes];
 }
 
 export const currentTheme = writable<PrometheusTheme>(BUILTIN_THEMES[0]);
 
-function getInitialTheme(): PrometheusTheme {
-  if (typeof window !== "undefined") {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const all = getAllThemes();
-      const found = all.find((t) => t.slug === saved);
-      if (found) return found;
+export async function initTheme() {
+  // Load theme + custom themes from vault config
+  try {
+    const res = await fetch("/api/config");
+    const config = await res.json();
+
+    // Load custom themes
+    if (config.customThemes && Array.isArray(config.customThemes)) {
+      customThemes = config.customThemes.map((t: PrometheusTheme) => ({ ...t, isCustom: true }));
     }
+
+    // Apply saved theme
+    if (config.theme) {
+      const all = getAllThemes();
+      const found = all.find((t) => t.slug === config.theme);
+      if (found) {
+        currentTheme.set(found);
+        applyTheme(found);
+        return;
+      }
+    }
+  } catch {
+    // API not available, use default
   }
-  return BUILTIN_THEMES[0];
+
+  // Default
+  currentTheme.set(BUILTIN_THEMES[0]);
+  applyTheme(BUILTIN_THEMES[0]);
 }
 
-export function initTheme() {
-  const theme = getInitialTheme();
-  currentTheme.set(theme);
-  applyTheme(theme);
-}
-
-export function setTheme(slug: string) {
+export async function setTheme(slug: string) {
   const all = getAllThemes();
   const theme = all.find((t) => t.slug === slug);
   if (!theme) return;
@@ -233,9 +198,46 @@ export function setTheme(slug: string) {
   currentTheme.set(theme);
   applyTheme(theme);
 
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, slug);
+  // Save to vault config
+  try {
+    await fetch("/api/config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ theme: slug }),
+    });
+  } catch {
+    // Silently fail
   }
+}
+
+export async function addCustomTheme(theme: PrometheusTheme): Promise<void> {
+  const existing = customThemes.findIndex((t) => t.slug === theme.slug);
+  if (existing >= 0) {
+    customThemes[existing] = { ...theme, isCustom: true };
+  } else {
+    customThemes.push({ ...theme, isCustom: true });
+  }
+
+  // Save to vault config
+  try {
+    await fetch("/api/config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customThemes }),
+    });
+  } catch {}
+}
+
+export async function removeCustomTheme(slug: string): Promise<void> {
+  customThemes = customThemes.filter((t) => t.slug !== slug);
+
+  try {
+    await fetch("/api/config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customThemes }),
+    });
+  } catch {}
 }
 
 export function applyTheme(theme: PrometheusTheme) {

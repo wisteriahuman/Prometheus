@@ -71,6 +71,7 @@ func NewRouter(h *Handlers) http.Handler {
 
 		// Config
 		r.Get("/config", h.Config.GetConfig)
+		r.Put("/config", h.Config.UpdateConfig)
 	})
 
 	// SPA static file serving (catch-all)
