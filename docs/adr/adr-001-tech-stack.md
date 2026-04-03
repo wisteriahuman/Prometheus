@@ -2,103 +2,86 @@
 
 ## 背景・課題 (Background/Problem)
 - Prometheusは「第二の脳」を目指すMarkdownベースのノートアプリである
-- Webアプリとして構築し、デスクトップ・モバイル両方で快適に動作する必要がある
+- シングルバイナリで配信し、`brew install`や`go install`で即利用可能にする
 - パフォーマンス（体感速度）とUIの完成度を最優先とする
-- .mdファイルを実データとして保持しつつ、リッチなWeb UIを提供するというハイブリッドな要件がある
+- .mdファイルを実データとして保持しつつ、リッチなWeb UIを提供する
 - 外部エディタ（Neovim等）との併用を想定し、キーボードファーストのUXを実現する
-- 将来的にマルチユーザー対応を見据えるが、個人利用の軽さを犠牲にしない
+- 個人利用に全振りし、チーム機能は持たない
 
 ## 決定事項 (Decision)
 
-| レイヤー | 技術 | バージョン |
+### バックエンド
+
+| レイヤー | 技術 | 理由 |
 |---|---|---|
-| Frontend Framework | SvelteKit | 2.x (Svelte 5) |
-| Runtime | **Node.js + pnpm** | Node.js 22+, pnpm 10+ |
-| CSS Framework | Tailwind CSS | v4 |
-| Markdown Editor | CodeMirror 6 | - |
-| Markdown Parser | unified + remark + rehype | - |
-| Graph Visualization | D3.js (d3-force) | - |
-| ORM | Drizzle ORM | - |
-| SQLite Driver | better-sqlite3 | - |
-| Validation | Zod | - |
-| 環境変数 | dotenv | - |
+| 言語 | **Go** | シングルバイナリ、クロスコンパイル、高速 |
+| HTTP | **net/http + chi** | 標準ライブラリベース、軽量ルーター |
+| SQLite | **modernc.org/sqlite** | pure Go（cgo不要）、クロスコンパイル可能 |
+| Markdown | **goldmark** | 高速、GFM対応、拡張可能 |
+| YAML | **gopkg.in/yaml.v3** | フロントマター解析 |
+| CLI | **cobra** | サブコマンド管理 |
+| 静的ファイル | **embed (Go標準)** | SPAをバイナリに同梱 |
+
+### フロントエンド
+
+| レイヤー | 技術 | 理由 |
+|---|---|---|
+| Framework | **SvelteKit (SPA)** | バンドル最小、adapter-staticでSPA出力 |
+| CSS | **Tailwind CSS v4** | CSS変数ベースでランタイムテーマ切替 |
+| エディタ | **CodeMirror 6** | 軽量、Vimモード、モバイル対応 |
+| グラフ | **D3.js (d3-force)** | フル制御、タグクラスタ可視化 |
+| アイコン | **Lucide** | 軽量SVGアイコン |
+| 図表 | **Mermaid** | コードブロックで図を描画 |
 
 ### 理由 (Reasons)
 
-#### SvelteKit
+#### Go バックエンド
 
-- **バンドルサイズ最小**: Svelteはコンパイル時にVanilla JSへ変換される。Reactのような仮想DOMランタイム（~80KB gzip）が不要
-- **カスタムアプリに最適**: Prometheusのコアコンポーネント（エディタ、グラフ、コマンドパレット）は全てカスタム実装。既存UIコンポーネントライブラリへの依存が少ないため、Reactエコシステムの優位性が活きない
-- **トランジション・アニメーション組み込み**: ノート切替、サイドバー開閉、テーマ切替のアニメーションがフレームワークレベルでサポートされる
-- **リアクティビティがシンプル**: Svelte 5のRunes（`$state`, `$derived`, `$effect`）はReactのuseState/useEffect/useMemoより直感的で、バグが入り込む余地が少ない
-- **コード量削減**: 同等の機能をReactより少ないコードで実装でき、メンテナンス性が高い
+- **シングルバイナリ配信**: `go build`で1ファイルに全て含まれる。Node.jsのようにランタイムやnode_modulesが不要
+- **`//go:embed`でSPA同梱**: ビルド済みのSvelteアプリをGoバイナリに埋め込み、1ファイルで完結
+- **クロスコンパイル**: `GOOS=darwin/linux/windows`で3プラットフォーム対応。CGO_ENABLED=0でpure Goビルド
+- **brew/go install配信**: GoReleaserでGitHub Releases + homebrew-tapに自動配信
+- **modernc.org/sqlite**: pure GoのSQLite実装。cgo不要なのでクロスコンパイルが問題なく動く
 
-#### Node.js + pnpm
+#### SvelteKit SPA
 
-- **Vite SSR互換**: SvelteKitの開発サーバー（Vite）はNode.js上で動作する。SSRコンテキストではNode.jsのAPIが使用されるため、Node.js互換のライブラリが必要
-- **better-sqlite3**: Node.js向けの高速SQLiteドライバ。bun:sqliteと同等のパフォーマンスでネイティブバインディングを提供
-- **エコシステムの安定性**: 全npmパッケージとの完全な互換性。ネイティブモジュール（@node-rs/argon2、better-sqlite3等）が問題なく動作する
-- **pnpmのワークスペース管理**: monorepo構成で`pnpm --filter`による効率的なパッケージ管理が可能
-- **pnpm onlyBuiltDependencies**: ネイティブモジュールのビルドをpnpmが適切に管理
-
-#### Tailwind CSS v4
-
-- **CSS変数ベースの設計**: `@theme`ディレクティブでCSS変数を定義し、ランタイムでの値変更が可能。ノート/ワークスペースごとのテーマ切替に最適
-- **JIT**: 未使用クラスを含まない最小CSSを生成
-
-#### CodeMirror 6
-
-- **Vim keybinding対応**: `@codemirror/vim`で本格的なVimモーションを提供。Neovimユーザーにとって自然な編集体験
-- **軽量**: Monaco Editor（~2MB）に対して~150KB（必要な拡張のみ）
-- **モバイル対応**: IME（日本語入力）との互換性が高い
-- **増分パーシング**: 大きなMarkdownファイルでも入力レスポンスが劣化しない
-- **カスタム拡張容易**: wikilink構文、タスクチェックボックス等のカスタム構文ハイライトを追加可能
-
-#### D3.js (d3-force)
-
-- **最小依存**: vis-networkやCytoscape.jsのような大きなライブラリに依存せず、d3-forceモジュールのみを利用
-- **フル制御**: ノードの描画、インタラクション、スタイリングを完全にカスタマイズ可能
-- **SVG/Canvas切替**: ノード数に応じてSVG（少数時、高品質）とCanvas（大量時、高性能）を使い分け可能
+- **SSRなし**: `adapter-static`でクライアントサイドのみ。GoがAPIサーバーと静的ファイル配信を担当
+- **バンドル最小**: 仮想DOMなし、コンパイル時にVanilla JSに変換
+- **全データ取得はfetch**: `+page.server.ts`なし。全てクライアントサイドでAPIを呼ぶ
 
 ### 受け入れるトレードオフ (Accepted Trade-offs)
-- **Svelteのエコシステムの小ささ**: React向けのUIコンポーネントライブラリ（shadcn/ui等）が使えない。ただしPrometheusはほぼ全コンポーネントをカスタム実装するため影響は限定的
-- **better-sqlite3のネイティブコンパイル**: bun:sqliteと異なりネイティブバインディングのコンパイルが必要。ただしpnpmのonlyBuiltDependenciesで管理され、実運用上の問題はない
-- **CodeMirror VimモードとNative Neovimの差**: 完全なNeovim互換ではない。しかし外部エディタとの併用（chokidarによるファイル監視）でカバーする
+- **SSRなし**: 初回表示が数十ms遅くなるが、個人ノートアプリではSEO不要、体感差なし
+- **SvelteのエコシステムがReactより小さい**: カスタムコンポーネント中心なので影響なし
+- **Goのテンプレートエンジン不使用**: フロントエンドは完全にSvelte。Goはpure APIサーバー
 
 ## 検討した別の選択肢 (Alternatives Considered)
 
-### Next.js 15 (App Router)
-- **メリット**: Reactエコシステム最大、Server Components、情報・チュートリアル豊富
-- **デメリット**: Reactランタイム（~80KB）のオーバーヘッド、App Routerの複雑性、Prometheusのカスタムコンポーネント中心の設計ではエコシステムの優位が活きない
-- **不採用理由**: パフォーマンスとコードのシンプルさでSvelteKitに劣る
+### Node.js + SvelteKit SSR（以前の構成）
+- **メリット**: SSRで初回表示が速い、サーバーとフロントが一体
+- **デメリット**: シングルバイナリ配信不可。Node.js + node_modules + better-sqlite3のネイティブビルドが必要
+- **不採用理由**: 配信の容易さがGoに大きく劣る。`npm install`でネイティブビルドが失敗するリスク
 
-### SolidStart
-- **メリット**: JSXベースで最高パフォーマンス、細粒度リアクティビティ
-- **デメリット**: メタフレームワーク（SolidStart）がまだ成熟途上、エコシステムが最も小さい
-- **不採用理由**: SvelteKit同等のパフォーマンスだが、フレームワークの安定性でリスクが高い
+### Rust (Axum/Actix)
+- **メリット**: 最高パフォーマンス
+- **デメリット**: ビルド時間が長い、開発速度が遅い
+- **不採用理由**: ノートアプリの規模ではGoで十分な性能。開発速度を優先
 
-### Monaco Editor
-- **メリット**: VS Code同等の編集機能
-- **デメリット**: バンドルサイズ~2MB、モバイル対応が弱い、Web Worker必須
-- **不採用理由**: ノートアプリにはオーバースペック。CodeMirror 6の方が軽量で要件を満たす
-
-### Bun (Runtime)
-- **メリット**: SQLite内蔵（bun:sqlite）でネイティブバインディング不要、ファイルI/O高速、起動速度が高速
-- **デメリット**: SvelteKitの開発サーバー（Vite）はNode.js上でSSRを実行するため、bun:sqliteが使用不可。Vite SSRコンテキストではBun固有のAPIにアクセスできない
-- **不採用理由**: ViteのSSRがNode.jsコンテキストで動作するため、bun:sqliteを利用できない。結局better-sqlite3等のNode.js互換ドライバが必要となり、Bunの最大の優位性（SQLite内蔵）が活きない
+### Electron / Tauri
+- **メリット**: ネイティブデスクトップアプリ
+- **デメリット**: 配信サイズが大きい（Electron: 100MB+）、Web UIと二重管理
+- **不採用理由**: ブラウザで十分。Goシングルバイナリの方が軽い
 
 ## 参考 (References)
-- [SvelteKit Documentation](https://svelte.dev/docs/kit)
-- [Node.js Documentation](https://nodejs.org/docs/latest-v22.x/api/)
-- [pnpm Documentation](https://pnpm.io/)
-- [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
-- [Tailwind CSS v4](https://tailwindcss.com/docs)
-- [CodeMirror 6](https://codemirror.net/)
-- [D3 Force-Directed Graph](https://d3js.org/d3-force)
-- [Drizzle ORM](https://orm.drizzle.team/)
+- [Go embed](https://pkg.go.dev/embed)
+- [chi router](https://github.com/go-chi/chi)
+- [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite)
+- [goldmark](https://github.com/yuin/goldmark)
+- [GoReleaser](https://goreleaser.com/)
+- [SvelteKit adapter-static](https://svelte.dev/docs/kit/adapter-static)
+- [cobra CLI](https://github.com/spf13/cobra)
 
 ## 議論 (Discussion)
-- フロントエンドフレームワークの選定において、当初はNext.jsを「エコシステムの総合力」で推奨する方向だったが、Prometheusのコンポーネントがほぼ全てカスタム実装である点を考慮し、SvelteKitの「フレームワーク自体の軽さ」がそのままユーザー体験に反映されると判断
-- 当初はBunをランタイムとして採用し、bun:sqliteを活用する計画だった。しかしSvelteKitの開発サーバー（Vite）がNode.js上でSSRを実行するため、bun:sqliteはSSRコンテキストで利用できないことが判明。結果としてNode.js + better-sqlite3の構成に変更した。better-sqlite3はbun:sqliteと同等のSQLiteパフォーマンスを提供し、Node.js環境での安定性も高い
-- パッケージマネージャはpnpmを採用。monorepoのワークスペース管理に優れ、onlyBuiltDependenciesによるネイティブモジュール（better-sqlite3、@node-rs/argon2）のビルド管理も適切に行われる
-- CodeMirror 6のVimモードはNeovimの完全な再現ではないが、外部エディタとの併用（chokidarファイル監視）により、重い編集はNative Neovimで、軽い編集とプレビューはWeb UIでという使い分けが可能
+- 当初はNode.js + SvelteKit SSRで構築。better-sqlite3のネイティブビルド問題と配信の困難さからGoに移行
+- Go移行時、フロントエンドのSvelteコンポーネントは一切変更せず、サーバーサイドのみ書き換え。APIインターフェース（18エンドポイント）を維持したため、フロントの修正はSSR→SPA化（`+page.server.ts`削除、クライアントサイドfetch化）のみ
+- SQLiteドライバは`modernc.org/sqlite`（pure Go）を採用。`mattn/go-sqlite3`はcgo必須でクロスコンパイルが複雑になるため不採用
+- CLIはcobraを採用。`prometheus dev ~/my-notes`の1コマンドでvault作成→DB初期化→サーバー起動→ブラウザアクセスまで完結

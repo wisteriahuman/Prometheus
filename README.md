@@ -18,7 +18,14 @@ Markdownベースの「第二の脳」ノートアプリ。
 ## インストール
 
 ```bash
+# Homebrew (macOS / Linux)
+brew install wisteriahuman/tap/prometheus
+
+# Go
 go install github.com/wisteriahuman/prometheus/cmd/prometheus@latest
+
+# GitHub Releases からバイナリを直接ダウンロード
+# https://github.com/wisteriahuman/Prometheus/releases
 ```
 
 ## 使い方
