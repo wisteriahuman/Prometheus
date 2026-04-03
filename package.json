@@ -1,0 +1,12 @@
+{
+  "name": "prometheus",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "better-sqlite3"]
+  }
+}

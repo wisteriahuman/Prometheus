@@ -1,0 +1,17 @@
+services:
+  prometheus:
+    build: .
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - prometheus-data:/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - PROMETHEUS_VAULT_PATH=/data/vault
+      - PROMETHEUS_DB_PATH=/data/prometheus.db
+
+volumes:
+  prometheus-data:
