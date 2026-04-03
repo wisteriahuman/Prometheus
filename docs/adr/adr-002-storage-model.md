@@ -99,4 +99,4 @@ theme: ocean              # オプショナル: ノート個別テーマ
 - チェックサムベースの変更検知を採用。SHA-256で実際に内容が変わったかを判定し、不要なインデックス更新を回避
 - 当初はchokidar（Node.js）でファイル監視を行う設計だったが、Go移行後はfsnotifyに置き換え予定。現時点ではサーバー起動時の全インデックスで対応
 - Markdown処理はgoldmark + カスタムwikilink変換。Node.js時代はunified/remark/rehypeを使用していたが、Go移行でgoldmarkに統一
-- FTS5仮想テーブルは作成済みだが、現在の検索はLIKE。将来的にFTS5に切り替えることで検索速度を向上可能
+- FTS5（unicode61トークナイザー）で全文検索を実装済み。日本語にも対応。FTS5が利用できない場合のみLIKEにフォールバック
