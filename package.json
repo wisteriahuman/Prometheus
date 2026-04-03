@@ -2,6 +2,10 @@
   "name": "prometheus",
   "private": true,
   "type": "module",
+  "scripts": {
+    "prometheus": "node packages/cli/bin/prometheus.js",
+    "cli:build": "pnpm --filter prometheus-notes run build"
+  },
   "engines": {
     "node": ">=18"
   },

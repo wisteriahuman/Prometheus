@@ -12,3 +12,9 @@ data/
 *.db-journal
 *.db-wal
 .turbo/
+
+# Go binary
+prometheus
+prometheus-*
+
+# Note: internal/server/web/ is committed (SPA build output for go install)
