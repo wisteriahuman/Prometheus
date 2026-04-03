@@ -13,8 +13,8 @@ data/
 *.db-wal
 .turbo/
 
-# Go binary (root only, not cmd/prometheus/)
-/prometheus
-/prometheus-*
+# Go binary
+/prm
+/prm-*
 
 # Note: internal/server/web/ is committed (SPA build output for go install)

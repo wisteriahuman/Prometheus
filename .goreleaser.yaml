@@ -7,7 +7,7 @@ before:
 
 builds:
   - main: ./cmd/prometheus
-    binary: prometheus
+    binary: prm
     env:
       - CGO_ENABLED=0
     goos:
@@ -42,12 +42,13 @@ changelog:
       - "^test:"
 
 brews:
-  - repository:
+  - name: prm
+    repository:
       owner: wisteriahuman
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     homepage: https://github.com/wisteriahuman/Prometheus
-    description: Markdownベースのノートアプリ
+    description: Markdownベースのノートアプリ Prometheus
     license: MIT
     commit_author:
       name: goreleaserbot

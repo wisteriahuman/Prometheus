@@ -15,7 +15,7 @@ func main() {
 	var port string
 
 	rootCmd := &cobra.Command{
-		Use:     "prometheus",
+		Use:     "prm",
 		Short:   "Markdownベースのノートアプリ Prometheus",
 		Version: version,
 	}
@@ -72,7 +72,7 @@ func main() {
 			os.MkdirAll(cfg.VaultPath, 0o755)
 			fmt.Println("✓ vault ディレクトリを作成しました")
 			fmt.Println()
-			fmt.Printf("次のコマンドで起動:\n  prometheus dev %s\n", cfg.VaultPath)
+			fmt.Printf("次のコマンドで起動:\n  prm dev %s\n", cfg.VaultPath)
 		},
 	}
 
@@ -88,9 +88,9 @@ func main() {
 			fmt.Printf("  port:  %s\n", cfg.Port)
 			fmt.Println()
 			fmt.Println("使い方:")
-			fmt.Println("  prometheus dev ~/my-notes       サーバー起動")
-			fmt.Println("  prometheus dev ~/work -p 3001   別ポートで起動")
-			fmt.Println("  prometheus init ~/new-vault     vault作成")
+			fmt.Println("  prm dev ~/my-notes       サーバー起動")
+			fmt.Println("  prm dev ~/work -p 3001   別ポートで起動")
+			fmt.Println("  prm init ~/new-vault     vault作成")
 		},
 	}
 

@@ -74,8 +74,8 @@ graph LR
 起動時に指定したディレクトリに ` + "`.md`" + ` ファイルとして保存されます。
 
 ` + "```bash" + `
-prometheus dev ~/my-notes        # ノートの保存先を指定して起動
-prometheus dev ~/work -p 3001    # 別ポートで起動
+prm dev ~/my-notes        # ノートの保存先を指定して起動
+prm dev ~/work -p 3001    # 別ポートで起動
 ` + "```" + `
 
 - Neovimやお好みのエディタで直接編集できます

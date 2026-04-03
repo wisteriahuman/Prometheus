@@ -7,19 +7,19 @@ Markdownベースの「第二の脳」ノートアプリ。
 - **Markdownファイル管理** — ノートは `.md` ファイルとして保存。Neovimや好きなエディタで直接編集可能
 - **双方向リンク** — `[[wikilink]]` でノート同士を自然に接続
 - **グラフビュー** — ノートの関係をタグクラスタ付きで可視化
-- **全文検索** — 高速なインクリメンタル検索
+- **全文検索** — FTS5による高速インクリメンタル検索
 - **デイリーノート** — テンプレート付きの日記機能
 - **タスク管理** — `- [ ]` 構文でタスクを自動抽出
-- **6つのテーマ** — Prometheus / Ocean / Forest / Sakura / Nord / Solarized
+- **13テーマ + カスタムテーマ** — ダーク/ライト/ビジネス + 自作可能
 - **Vimキーバインド** — エディタ内でVimモーション、`:w` で保存
 - **Mermaid図** — コードブロックで図を描画
-- **シングルバイナリ** — Go製。`go install` で即利用可能
+- **シングルバイナリ** — Go製。`brew install` で即利用可能
 
 ## インストール
 
 ```bash
 # Homebrew (macOS / Linux)
-brew install wisteriahuman/tap/prometheus
+brew install wisteriahuman/tap/prm
 
 # Go
 go install github.com/wisteriahuman/prometheus/cmd/prometheus@latest
@@ -32,16 +32,16 @@ go install github.com/wisteriahuman/prometheus/cmd/prometheus@latest
 
 ```bash
 # ノートを ~/my-notes に保存して起動
-prometheus dev ~/my-notes
+prm dev ~/my-notes
 
 # 別のvaultを別ポートで起動
-prometheus dev ~/work -p 3001
+prm dev ~/work -p 3001
 
 # 新しいvaultを作成
-prometheus init ~/new-vault
+prm init ~/new-vault
 
 # 設定を確認
-prometheus info
+prm info
 ```
 
 初回起動時にサンプルノートが自動生成されます。
@@ -56,7 +56,7 @@ cd Prometheus
 make build
 
 # 起動
-./prometheus dev ~/my-notes
+./prm dev ~/my-notes
 ```
 
 ## ショートカット
