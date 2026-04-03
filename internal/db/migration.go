@@ -36,7 +36,7 @@ func (d *DB) Migrate() {
 			line_number INTEGER NOT NULL,
 			due_date TEXT
 		)`,
-		`CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(title, content)`,
+		`CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(title, content, tokenize='unicode61')`,
 		`CREATE INDEX IF NOT EXISTS idx_links_source ON links(source_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_links_target ON links(target_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_links_slug ON links(target_slug)`,

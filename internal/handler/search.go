@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"net/http"
 	"strings"
 
@@ -22,19 +23,6 @@ func (h *SearchHandler) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	like := "%" + q + "%"
-	rows, err := h.db.Query(`
-		SELECT id, path, title, content, modified_at
-		FROM notes
-		WHERE title LIKE ? OR content LIKE ?
-		LIMIT 50
-	`, like, like)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "search failed")
-		return
-	}
-	defer rows.Close()
-
 	type result struct {
 		ID         string `json:"id"`
 		Path       string `json:"path"`
@@ -44,6 +32,19 @@ func (h *SearchHandler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := make([]result, 0)
+
+	// Try FTS5 first
+	rows, err := h.searchFTS5(q)
+	if err != nil {
+		// Fallback to LIKE
+		rows, err = h.searchLIKE(q)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "search failed")
+			return
+		}
+	}
+	defer rows.Close()
+
 	for rows.Next() {
 		var id, path, title, content string
 		var modifiedAt int64
@@ -68,6 +69,29 @@ func (h *SearchHandler) Search(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, results)
 }
 
+func (h *SearchHandler) searchFTS5(q string) (*sql.Rows, error) {
+	// FTS5 MATCH query — escape special characters
+	ftsQuery := strings.ReplaceAll(q, `"`, `""`)
+
+	return h.db.Query(`
+		SELECT n.id, n.path, n.title, n.content, n.modified_at
+		FROM notes_fts f
+		JOIN notes n ON n.rowid = f.rowid
+		WHERE notes_fts MATCH ?
+		LIMIT 50
+	`, `"`+ftsQuery+`"`)
+}
+
+func (h *SearchHandler) searchLIKE(q string) (*sql.Rows, error) {
+	like := "%" + q + "%"
+	return h.db.Query(`
+		SELECT id, path, title, content, modified_at
+		FROM notes
+		WHERE title LIKE ? OR content LIKE ?
+		LIMIT 50
+	`, like, like)
+}
+
 func generateSnippet(text, term string) string {
 	lower := strings.ToLower(text)
 	lowerTerm := strings.ToLower(term)
@@ -86,8 +110,6 @@ func generateSnippet(text, term string) string {
 	}
 
 	snippet := text[start:end]
-
-	// Clean up: remove newlines
 	snippet = strings.ReplaceAll(snippet, "\n", " ")
 
 	prefix := ""

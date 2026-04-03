@@ -61,6 +61,12 @@ func (idx *Indexer) IndexNote(notePath string) error {
 		return fmt.Errorf("upsert note: %w", err)
 	}
 
+	// Update FTS5 index
+	tx.Exec("DELETE FROM notes_fts WHERE rowid IN (SELECT rowid FROM notes_fts WHERE title = ? OR content = ?)",
+		note.Frontmatter.Title, note.Content)
+	tx.Exec("INSERT INTO notes_fts (rowid, title, content) VALUES ((SELECT rowid FROM notes WHERE id = ?), ?, ?)",
+		note.Frontmatter.ID, note.Frontmatter.Title, note.Content)
+
 	// Re-index links
 	tx.Exec("DELETE FROM links WHERE source_id = ?", note.Frontmatter.ID)
 	for _, wl := range wikilinks {
