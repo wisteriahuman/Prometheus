@@ -3,7 +3,7 @@ version: 2
 before:
   hooks:
     - go mod tidy
-    - cd web && pnpm install && pnpm run build
+    - sh -c "cd web && pnpm install && pnpm run build"
 
 builds:
   - main: ./cmd/prometheus
@@ -26,9 +26,6 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    format_overrides:
-      - goos: windows
-        formats: [zip]
 
 changelog:
   sort: asc
