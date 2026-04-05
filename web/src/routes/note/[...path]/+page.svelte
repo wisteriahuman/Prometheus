@@ -34,6 +34,18 @@
   function exportNote(format: string) {
     showExportMenu = false;
     if (!noteData) return;
+
+    if (format === "pdf") {
+      // Open HTML export in new tab, then trigger print dialog
+      const printWindow = window.open(`/api/export/${noteData.path}?format=html`, "_blank");
+      if (printWindow) {
+        printWindow.addEventListener("load", () => {
+          printWindow.print();
+        });
+      }
+      return;
+    }
+
     window.open(`/api/export/${noteData.path}?format=${format}`, "_blank");
   }
   let titleInput = $state("");
@@ -269,6 +281,12 @@
               class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-text-muted hover:bg-bg-card-hover"
             >
               Markdown
+            </button>
+            <button
+              onclick={() => exportNote("pdf")}
+              class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-text-muted hover:bg-bg-card-hover"
+            >
+              PDF
             </button>
           </div>
         {/if}
