@@ -35,9 +35,14 @@
     showExportMenu = false;
     if (!noteData) return;
 
+    // Include theme in export URL
+    const themeParam = noteThemeSlug ? `&theme=${noteThemeSlug}` : "";
+
     if (format === "pdf") {
-      // Open HTML export inline (no download), then trigger print dialog
-      const printWindow = window.open(`/api/export/${noteData.path}?format=html&inline=true`, "_blank");
+      const printWindow = window.open(
+        `/api/export/${noteData.path}?format=html&inline=true${themeParam}`,
+        "_blank",
+      );
       if (printWindow) {
         printWindow.addEventListener("load", () => {
           setTimeout(() => printWindow.print(), 300);
@@ -46,7 +51,7 @@
       return;
     }
 
-    window.open(`/api/export/${noteData.path}?format=${format}`, "_blank");
+    window.open(`/api/export/${noteData.path}?format=${format}${themeParam}`, "_blank");
   }
   let titleInput = $state("");
   let showThemePicker = $state(false);
