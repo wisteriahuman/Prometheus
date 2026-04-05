@@ -118,25 +118,25 @@ func (h *TasksHandler) Toggle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Toggle checkbox in raw content
-	lines := strings.Split(note.RawContent, "\n")
-	if lineNumber < 1 || lineNumber > len(lines) {
+	// Toggle checkbox in body content
+	// lineNumber is relative to body (after frontmatter), so use note.Content
+	bodyLines := strings.Split(note.Content, "\n")
+	if lineNumber < 1 || lineNumber > len(bodyLines) {
 		writeError(w, http.StatusBadRequest, "line number out of range")
 		return
 	}
 
-	line := lines[lineNumber-1]
+	line := bodyLines[lineNumber-1]
 	if body.Completed {
 		line = strings.Replace(line, "- [ ] ", "- [x] ", 1)
 	} else {
 		line = strings.Replace(line, "- [x] ", "- [ ] ", 1)
 		line = strings.Replace(line, "- [X] ", "- [ ] ", 1)
 	}
-	lines[lineNumber-1] = line
+	bodyLines[lineNumber-1] = line
 
-	// Re-parse and write
-	newRaw := strings.Join(lines, "\n")
-	fm, content := service.ParseFrontmatterPublic([]byte(newRaw))
+	content := strings.Join(bodyLines, "\n")
+	fm := note.Frontmatter
 
 	if _, err := h.vault.WriteNote(notePath, content, fm); err != nil {
 		writeError(w, http.StatusInternalServerError, fmt.Sprintf("failed to write note: %v", err))

@@ -154,16 +154,20 @@
 
   .prose :global(li > p) { margin: 0.3em 0; }
 
-  .prose :global(.contains-task-list) {
+  /* Task list: goldmark outputs <li><input type="checkbox"> without wrapper classes */
+  .prose :global(.contains-task-list),
+  .prose :global(ul:has(> li > input[type="checkbox"])) {
     list-style-type: none;
     padding-left: 0.5em;
   }
 
-  .prose :global(.task-list-item) {
+  .prose :global(.task-list-item),
+  .prose :global(li:has(> input[type="checkbox"])) {
     display: flex;
     align-items: baseline;
     gap: 0.5em;
     padding-left: 0;
+    list-style-type: none;
   }
 
   .prose :global(li input[type="checkbox"]) {
