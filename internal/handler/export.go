@@ -87,12 +87,17 @@ func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNot
   }
 
   @page {
-    margin: 15mm 20mm;
+    margin: 0;
   }
 
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  html {
+    background: var(--bg);
+    min-height: 100%%;
   }
 
   body {
@@ -176,7 +181,7 @@ func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNot
   }
 
   @media print {
-    body { padding: 0; max-width: none; }
+    body { padding: 15mm 20mm; max-width: none; margin: 0; }
     a { text-decoration: none; }
     pre { white-space: pre-wrap; word-wrap: break-word; }
   }
