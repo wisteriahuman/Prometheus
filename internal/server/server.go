@@ -50,6 +50,7 @@ func NewServer(cfg *config.Config) *Server {
 		Folders:   handler.NewFoldersHandler(cfg.VaultPath),
 		Backlinks: handler.NewBacklinksHandler(database),
 		Config:    handler.NewConfigHandler(cfg),
+		Export:    handler.NewExportHandler(vault, md),
 	}
 
 	router := NewRouter(handlers)

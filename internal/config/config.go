@@ -27,23 +27,29 @@ func New(vaultPath, dbPath, port string) *Config {
 	if vaultPath == "" {
 		vaultPath = getEnv("PROMETHEUS_VAULT_PATH", "./vault")
 	}
-	if dbPath == "" {
-		dbPath = getEnv("PROMETHEUS_DB_PATH", "./data/prometheus.db")
-	}
 	if port == "" {
 		port = getEnv("PORT", "3000")
 	}
 
 	vaultPath = expandHome(vaultPath)
-	dbPath = expandHome(dbPath)
-
 	abs, err := filepath.Abs(vaultPath)
 	if err == nil {
 		vaultPath = abs
 	}
-	abs, err = filepath.Abs(dbPath)
-	if err == nil {
-		dbPath = abs
+
+	// DB is always inside the vault's .prometheus directory
+	// This ensures each vault has its own isolated database
+	if dbPath == "" {
+		dbPath = getEnv("PROMETHEUS_DB_PATH", "")
+	}
+	if dbPath == "" {
+		dbPath = filepath.Join(vaultPath, ".prometheus", "data.db")
+	} else {
+		dbPath = expandHome(dbPath)
+		abs, err = filepath.Abs(dbPath)
+		if err == nil {
+			dbPath = abs
+		}
 	}
 
 	return &Config{

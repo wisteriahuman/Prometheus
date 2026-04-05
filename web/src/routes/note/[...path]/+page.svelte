@@ -5,7 +5,7 @@
   import BacklinkPanel from "$lib/components/editor/BacklinkPanel.svelte";
   import TagEditor from "$lib/components/editor/TagEditor.svelte";
   import { getAllThemes } from "$lib/stores/theme";
-  import { FileText, Palette } from "lucide-svelte";
+  import { FileText, Palette, Download } from "lucide-svelte";
 
   interface NoteData {
     path: string;
@@ -29,6 +29,13 @@
   let lastSaved = $state<string | null>(null);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
   let editingTitle = $state(false);
+  let showExportMenu = $state(false);
+
+  function exportNote(format: string) {
+    showExportMenu = false;
+    if (!noteData) return;
+    window.open(`/api/export/${noteData.path}?format=${format}`, "_blank");
+  }
   let titleInput = $state("");
   let showThemePicker = $state(false);
   let noteThemeSlug = $state<string | undefined>(undefined);
@@ -238,6 +245,34 @@
         notePath={noteData.path}
         frontmatter={noteData.frontmatter}
       />
+
+      <!-- Export -->
+      <div class="relative">
+        <button
+          onclick={() => (showExportMenu = !showExportMenu)}
+          class="flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] text-text-dim transition-colors hover:border-primary hover:text-text-muted"
+          title="エクスポート"
+        >
+          <Download size={10} />
+        </button>
+
+        {#if showExportMenu}
+          <div class="absolute right-0 top-full z-50 mt-1 min-w-[120px] rounded-lg border border-border bg-bg-card py-1 shadow-xl">
+            <button
+              onclick={() => exportNote("html")}
+              class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-text-muted hover:bg-bg-card-hover"
+            >
+              HTML
+            </button>
+            <button
+              onclick={() => exportNote("md")}
+              class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-text-muted hover:bg-bg-card-hover"
+            >
+              Markdown
+            </button>
+          </div>
+        {/if}
+      </div>
 
       <!-- Note theme picker -->
       <div class="relative">

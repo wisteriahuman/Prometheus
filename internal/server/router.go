@@ -20,6 +20,7 @@ type Handlers struct {
 	Folders   *handler.FoldersHandler
 	Backlinks *handler.BacklinksHandler
 	Config    *handler.ConfigHandler
+	Export    *handler.ExportHandler
 }
 
 func NewRouter(h *Handlers) http.Handler {
@@ -72,6 +73,9 @@ func NewRouter(h *Handlers) http.Handler {
 		// Config
 		r.Get("/config", h.Config.GetConfig)
 		r.Put("/config", h.Config.UpdateConfig)
+
+		// Export
+		r.Get("/export/*", h.Export.Export)
 	})
 
 	// SPA static file serving (catch-all)
