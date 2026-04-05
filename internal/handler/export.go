@@ -87,7 +87,7 @@ func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNot
   }
 
   @page {
-    margin: 0;
+    margin: 15mm 20mm;
   }
 
   * {
@@ -95,18 +95,14 @@ func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNot
     print-color-adjust: exact !important;
   }
 
-  html, body {
-    margin: 0;
-    background: var(--bg);
-  }
-
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans JP', sans-serif;
     max-width: 800px;
     margin: 0 auto;
-    padding: 15mm 20mm;
+    padding: 40px 20px;
     line-height: 1.7;
     color: var(--text);
+    background: var(--bg);
   }
 
   h1 {
