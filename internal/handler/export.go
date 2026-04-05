@@ -90,6 +90,11 @@ func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNot
     margin: 15mm;
   }
 
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans JP', sans-serif;
     max-width: 800px;

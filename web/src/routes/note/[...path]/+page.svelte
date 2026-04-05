@@ -40,6 +40,20 @@
     const theme = noteThemeSlug || get(currentTheme).slug;
     const themeParam = `&theme=${theme}`;
 
+    if (format === "pdf") {
+      // Open themed HTML inline, user adjusts print settings manually
+      const printWindow = window.open(
+        `/api/export/${noteData.path}?format=html&inline=true${themeParam}`,
+        "_blank",
+      );
+      if (printWindow) {
+        printWindow.addEventListener("load", () => {
+          setTimeout(() => printWindow.print(), 500);
+        });
+      }
+      return;
+    }
+
     window.open(`/api/export/${noteData.path}?format=${format}${themeParam}`, "_blank");
   }
   let titleInput = $state("");
@@ -275,6 +289,12 @@
               class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-text-muted hover:bg-bg-card-hover"
             >
               Markdown
+            </button>
+            <button
+              onclick={() => exportNote("pdf")}
+              class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-text-muted hover:bg-bg-card-hover"
+            >
+              PDF（印刷）
             </button>
           </div>
         {/if}
