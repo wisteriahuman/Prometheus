@@ -168,6 +168,17 @@ func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNot
   strong { color: var(--text); }
   em { color: var(--text-muted); }
 
+  .mermaid {
+    display: flex;
+    justify-content: center;
+    background: var(--bg-card);
+    padding: 1.5em;
+    border-radius: 8px;
+    margin: 1.2em 0;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+  }
+
   @media print {
     body { padding: 0; max-width: none; }
     a { text-decoration: none; }
@@ -180,6 +191,29 @@ func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNot
 <footer style="margin-top: 3em; padding-top: 1em; border-top: 1px solid var(--border); font-size: 0.8em; color: var(--text-dim);">
   Exported from Prometheus
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  document.querySelectorAll('pre > code.language-mermaid').forEach(function(code) {
+    var pre = code.parentElement;
+    var container = document.createElement('div');
+    container.className = 'mermaid';
+    container.textContent = code.textContent;
+    pre.replaceWith(container);
+  });
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim() || '#1e293b',
+      primaryColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#6366f1',
+      primaryTextColor: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#e2e8f0',
+      primaryBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#334155',
+      lineColor: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#94a3b8',
+      secondaryColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim() || '#1e293b',
+      fontFamily: '-apple-system, Noto Sans JP, sans-serif'
+    }
+  });
+</script>
 </body>
 </html>`,
 		note.Frontmatter.Title,
