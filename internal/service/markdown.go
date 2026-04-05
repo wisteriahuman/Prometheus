@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	mathjax "github.com/litao91/goldmark-mathjax"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -32,7 +33,7 @@ type Markdown struct {
 
 func NewMarkdown() *Markdown {
 	md := goldmark.New(
-		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithExtensions(extension.GFM, mathjax.MathJax),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		goldmark.WithRendererOptions(html.WithUnsafe()),
 	)
@@ -68,9 +69,8 @@ func convertWikilinksInHTML(html string) string {
 		// Check for <code> or <pre> tags — skip their contents
 		if i < len(html)-1 && html[i] == '<' {
 			tagStart := i
-			// Find tag name
+			// Skip <code>, <pre>, and <span class="math ..."> elements
 			if strings.HasPrefix(html[i:], "<code") || strings.HasPrefix(html[i:], "<pre") {
-				// Find the matching closing tag
 				var closeTag string
 				if strings.HasPrefix(html[i:], "<code") {
 					closeTag = "</code>"
@@ -79,7 +79,16 @@ func convertWikilinksInHTML(html string) string {
 				}
 				endIdx := strings.Index(html[i:], closeTag)
 				if endIdx >= 0 {
-					// Write everything from tag start to end of closing tag unchanged
+					result.WriteString(html[tagStart : i+endIdx+len(closeTag)])
+					i = i + endIdx + len(closeTag)
+					continue
+				}
+			}
+			// Skip math spans
+			if strings.HasPrefix(html[i:], `<span class="math `) {
+				closeTag := "</span>"
+				endIdx := strings.Index(html[i:], closeTag)
+				if endIdx >= 0 {
 					result.WriteString(html[tagStart : i+endIdx+len(closeTag)])
 					i = i + endIdx + len(closeTag)
 					continue

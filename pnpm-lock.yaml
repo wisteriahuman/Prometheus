@@ -241,6 +241,9 @@ importers:
       d3-zoom:
         specifier: ^3.0.0
         version: 3.0.0
+      katex:
+        specifier: ^0.16.44
+        version: 0.16.44
       lucide-svelte:
         specifier: ^1.0.1
         version: 1.0.1(svelte@5.55.1)

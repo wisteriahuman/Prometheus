@@ -70,6 +70,7 @@ func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNot
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>%s</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
 <style>
   :root {
     --bg: %s;
@@ -213,6 +214,14 @@ func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNot
       secondaryColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim() || '#1e293b',
       fontFamily: '-apple-system, Noto Sans JP, sans-serif'
     }
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
+<script>
+  document.querySelectorAll('.math.inline, .math.display').forEach(function(el) {
+    var tex = el.textContent.replace(/^\\\(|\\\)$/g, '').replace(/^\\\[|\\\]$/g, '').trim();
+    var display = el.classList.contains('display');
+    try { el.innerHTML = katex.renderToString(tex, {displayMode: display, throwOnError: false}); } catch(e) {}
   });
 </script>
 </body>

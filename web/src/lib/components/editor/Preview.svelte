@@ -62,10 +62,35 @@
     }
   }
 
+  async function renderMath() {
+    if (!previewEl) return;
+    const mathEls = previewEl.querySelectorAll(".math.inline, .math.display");
+    if (mathEls.length === 0) return;
+
+    const katex = (await import("katex")).default;
+    // @ts-ignore
+    await import("katex/dist/katex.min.css");
+
+    mathEls.forEach((el) => {
+      const tex = (el.textContent ?? "")
+        .replace(/^\\\(|\\\)$/g, "")
+        .replace(/^\\\[|\\\]$/g, "")
+        .trim();
+      const displayMode = el.classList.contains("display");
+      try {
+        el.innerHTML = katex.renderToString(tex, { displayMode, throwOnError: false });
+      } catch {
+        // leave as-is
+      }
+    });
+  }
+
   $effect(() => {
     if (html && previewEl) {
-      // Wait for DOM update then render mermaid
-      tick().then(() => renderMermaid());
+      tick().then(() => {
+        renderMermaid();
+        renderMath();
+      });
     }
   });
 </script>
@@ -268,5 +293,21 @@
 
   .prose :global(.mermaid-container svg) {
     max-width: 100%;
+  }
+
+  /* Math (KaTeX) */
+  .prose :global(.math.display) {
+    display: flex;
+    justify-content: center;
+    margin: 1em 0;
+    overflow-x: auto;
+  }
+
+  .prose :global(.math.inline) {
+    display: inline;
+  }
+
+  .prose :global(.katex) {
+    font-size: 1.1em;
   }
 </style>
