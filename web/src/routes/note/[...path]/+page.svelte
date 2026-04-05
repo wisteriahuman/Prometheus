@@ -4,7 +4,8 @@
   import EditorLayout from "$lib/components/editor/EditorLayout.svelte";
   import BacklinkPanel from "$lib/components/editor/BacklinkPanel.svelte";
   import TagEditor from "$lib/components/editor/TagEditor.svelte";
-  import { getAllThemes } from "$lib/stores/theme";
+  import { getAllThemes, currentTheme } from "$lib/stores/theme";
+  import { get } from "svelte/store";
   import { FileText, Palette, Download } from "lucide-svelte";
 
   interface NoteData {
@@ -35,8 +36,9 @@
     showExportMenu = false;
     if (!noteData) return;
 
-    // Include theme in export URL
-    const themeParam = noteThemeSlug ? `&theme=${noteThemeSlug}` : "";
+    // Include theme: note theme > app theme
+    const theme = noteThemeSlug || get(currentTheme).slug;
+    const themeParam = `&theme=${theme}`;
 
     if (format === "pdf") {
       const printWindow = window.open(

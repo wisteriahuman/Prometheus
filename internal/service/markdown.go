@@ -46,29 +46,72 @@ func NewMarkdown() *Markdown {
 }
 
 func (m *Markdown) ToHTML(markdown string) string {
-	// Remove frontmatter before rendering
 	body := removeFrontmatter(markdown)
 
-	// Convert wikilinks to HTML links before goldmark processing
-	body = wikilinkRegex.ReplaceAllStringFunc(body, func(match string) string {
-		sub := wikilinkRegex.FindStringSubmatch(match)
-		if len(sub) < 2 {
-			return match
-		}
-		slug := strings.TrimSpace(sub[1])
-		display := slug
-		if len(sub) >= 3 && sub[2] != "" {
-			display = strings.TrimSpace(sub[2])
-		}
-		href := "/note/" + slugToPath(slug)
-		return `<a href="` + href + `" class="wikilink" data-slug="` + slug + `">` + display + `</a>`
-	})
-
+	// First: render markdown to HTML via goldmark
 	var buf bytes.Buffer
 	m.md.Convert([]byte(body), &buf)
+	htmlStr := string(m.sanitize.SanitizeBytes(buf.Bytes()))
 
-	sanitized := m.sanitize.SanitizeBytes(buf.Bytes())
-	return string(sanitized)
+	// Then: convert [[wikilinks]] in the HTML, but NOT inside <code> or <pre> tags
+	htmlStr = convertWikilinksInHTML(htmlStr)
+
+	return htmlStr
+}
+
+// convertWikilinksInHTML replaces [[wikilink]] syntax only in text outside <code> and <pre> tags
+func convertWikilinksInHTML(html string) string {
+	var result strings.Builder
+	i := 0
+
+	for i < len(html) {
+		// Check for <code> or <pre> tags — skip their contents
+		if i < len(html)-1 && html[i] == '<' {
+			tagStart := i
+			// Find tag name
+			if strings.HasPrefix(html[i:], "<code") || strings.HasPrefix(html[i:], "<pre") {
+				// Find the matching closing tag
+				var closeTag string
+				if strings.HasPrefix(html[i:], "<code") {
+					closeTag = "</code>"
+				} else {
+					closeTag = "</pre>"
+				}
+				endIdx := strings.Index(html[i:], closeTag)
+				if endIdx >= 0 {
+					// Write everything from tag start to end of closing tag unchanged
+					result.WriteString(html[tagStart : i+endIdx+len(closeTag)])
+					i = i + endIdx + len(closeTag)
+					continue
+				}
+			}
+		}
+
+		// Check for [[wikilink]] pattern
+		if i < len(html)-3 && html[i] == '[' && html[i+1] == '[' {
+			endBracket := strings.Index(html[i:], "]]")
+			if endBracket >= 0 {
+				wikilinkText := html[i : i+endBracket+2]
+				sub := wikilinkRegex.FindStringSubmatch(wikilinkText)
+				if len(sub) >= 2 {
+					slug := strings.TrimSpace(sub[1])
+					display := slug
+					if len(sub) >= 3 && sub[2] != "" {
+						display = strings.TrimSpace(sub[2])
+					}
+					href := "/note/" + slugToPath(slug)
+					result.WriteString(`<a href="` + href + `" class="wikilink" data-slug="` + slug + `">` + display + `</a>`)
+					i = i + endBracket + 2
+					continue
+				}
+			}
+		}
+
+		result.WriteByte(html[i])
+		i++
+	}
+
+	return result.String()
 }
 
 func removeFrontmatter(content string) string {
