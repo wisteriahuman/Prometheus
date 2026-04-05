@@ -21,6 +21,7 @@ type Handlers struct {
 	Backlinks *handler.BacklinksHandler
 	Config    *handler.ConfigHandler
 	Export    *handler.ExportHandler
+	Assets   *handler.AssetsHandler
 }
 
 func NewRouter(h *Handlers) http.Handler {
@@ -76,6 +77,12 @@ func NewRouter(h *Handlers) http.Handler {
 
 		// Export
 		r.Get("/export/*", h.Export.Export)
+
+		// Assets
+		r.Post("/assets", h.Assets.Upload)
+		r.Get("/assets", h.Assets.List)
+		r.Get("/assets/*", h.Assets.Serve)
+		r.Delete("/assets/*", h.Assets.Delete)
 	})
 
 	// SPA static file serving (catch-all)

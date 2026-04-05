@@ -28,6 +28,33 @@
     saveRef.fn = onsave;
   });
 
+  async function uploadAndInsert(file: File) {
+    if (!view) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/assets", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) return;
+
+      const result = await res.json();
+      const markdown = result.markdown as string;
+
+      // Insert markdown at cursor position
+      const pos = view.state.selection.main.head;
+      view.dispatch({
+        changes: { from: pos, insert: markdown + "\n" },
+        selection: { anchor: pos + markdown.length + 1 },
+      });
+    } catch (e) {
+      console.error("Upload failed:", e);
+    }
+  }
+
   function doSave() {
     if (saveRef.fn && view) {
       saveRef.fn(view.state.doc.toString());
@@ -102,6 +129,39 @@
     // Listen for save events from UI buttons
     const handleSaveEvent = () => doSave();
     window.addEventListener("prometheus:save", handleSaveEvent);
+
+    // File drop handler
+    editorContainer.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      editorContainer.classList.add("drop-active");
+    });
+    editorContainer.addEventListener("dragleave", () => {
+      editorContainer.classList.remove("drop-active");
+    });
+    editorContainer.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      editorContainer.classList.remove("drop-active");
+      const files = e.dataTransfer?.files;
+      if (files) {
+        for (const file of files) {
+          await uploadAndInsert(file);
+        }
+      }
+    });
+
+    // Clipboard paste handler (images)
+    editorContainer.addEventListener("paste", async (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) await uploadAndInsert(file);
+        }
+      }
+    });
+
     return () => window.removeEventListener("prometheus:save", handleSaveEvent);
   });
 
@@ -153,5 +213,10 @@
 
   :global(.cm-editor .cm-content) {
     padding: 0 4px;
+  }
+
+  .drop-active {
+    outline: 2px dashed var(--color-primary);
+    outline-offset: -2px;
   }
 </style>
