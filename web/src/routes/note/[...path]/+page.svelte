@@ -36,11 +36,11 @@
     if (!noteData) return;
 
     if (format === "pdf") {
-      // Open HTML export in new tab, then trigger print dialog
-      const printWindow = window.open(`/api/export/${noteData.path}?format=html`, "_blank");
+      // Open HTML export inline (no download), then trigger print dialog
+      const printWindow = window.open(`/api/export/${noteData.path}?format=html&inline=true`, "_blank");
       if (printWindow) {
         printWindow.addEventListener("load", () => {
-          printWindow.print();
+          setTimeout(() => printWindow.print(), 300);
         });
       }
       return;

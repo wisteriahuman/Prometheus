@@ -39,10 +39,11 @@ func (h *ExportHandler) Export(w http.ResponseWriter, r *http.Request) {
 	}
 
 	baseName := strings.TrimSuffix(filepath.Base(notePath), ".md")
+	inline := r.URL.Query().Get("inline") == "true"
 
 	switch format {
 	case "html":
-		h.exportHTML(w, note, baseName)
+		h.exportHTML(w, note, baseName, inline)
 	case "md":
 		h.exportMarkdown(w, note, baseName)
 	default:
@@ -50,7 +51,7 @@ func (h *ExportHandler) Export(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNote, baseName string) {
+func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNote, baseName string, inline bool) {
 	bodyHTML := h.md.ToHTML(note.RawContent)
 
 	html := fmt.Sprintf(`<!DOCTYPE html>
@@ -99,7 +100,9 @@ func (h *ExportHandler) exportHTML(w http.ResponseWriter, note *service.VaultNot
 </html>`, note.Frontmatter.Title, bodyHTML)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.html"`, baseName))
+	if !inline {
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.html"`, baseName))
+	}
 	w.Write([]byte(html))
 }
 
