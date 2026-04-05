@@ -22,6 +22,7 @@ type vaultConfig struct {
 	Theme             string            `json:"theme,omitempty"`
 	DailyNoteTemplate string            `json:"dailyNoteTemplate,omitempty"`
 	CustomThemes      []json.RawMessage `json:"customThemes,omitempty"`
+	TutorialShown     bool              `json:"tutorialShown,omitempty"`
 }
 
 func (h *ConfigHandler) configPath() string {
@@ -52,17 +53,19 @@ func (h *ConfigHandler) writeVaultConfig(vc vaultConfig) error {
 func (h *ConfigHandler) GetConfig(w http.ResponseWriter, r *http.Request) {
 	vc := h.readVaultConfig()
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"vaultPath":    h.cfg.VaultPath,
-		"theme":        vc.Theme,
-		"customThemes": vc.CustomThemes,
+		"vaultPath":     h.cfg.VaultPath,
+		"theme":         vc.Theme,
+		"customThemes":  vc.CustomThemes,
+		"tutorialShown": vc.TutorialShown,
 	})
 }
 
 // PUT /api/config
 func (h *ConfigHandler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Theme        *string           `json:"theme"`
-		CustomThemes []json.RawMessage `json:"customThemes"`
+		Theme         *string           `json:"theme"`
+		CustomThemes  []json.RawMessage `json:"customThemes"`
+		TutorialShown *bool             `json:"tutorialShown"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request")
@@ -76,6 +79,9 @@ func (h *ConfigHandler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.CustomThemes != nil {
 		vc.CustomThemes = req.CustomThemes
+	}
+	if req.TutorialShown != nil {
+		vc.TutorialShown = *req.TutorialShown
 	}
 
 	if err := h.writeVaultConfig(vc); err != nil {

@@ -129,6 +129,17 @@
         window.dispatchEvent(new CustomEvent("prometheus:create-theme"));
       },
     },
+    {
+      id: "tutorial",
+      title: "チュートリアル",
+      description: "使い方ガイドを表示",
+      category: "ヘルプ",
+      icon: Keyboard,
+      action: () => {
+        onclose();
+        window.dispatchEvent(new CustomEvent("prometheus:tutorial"));
+      },
+    },
   ];
 
   let themeCommands = $derived(

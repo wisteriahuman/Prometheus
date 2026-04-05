@@ -6,6 +6,7 @@
   import CommandPalette from "$lib/components/command/CommandPalette.svelte";
   import ShortcutHelp from "$lib/components/ui/ShortcutHelp.svelte";
   import ThemeCreator from "$lib/components/ui/ThemeCreator.svelte";
+  import TutorialModal from "$lib/components/ui/TutorialModal.svelte";
   import { sidebarOpen, toggleSidebar } from "$lib/stores/sidebar";
   import { initTheme } from "$lib/stores/theme";
   import { goto } from "$app/navigation";
@@ -18,21 +19,26 @@
   let commandPaletteOpen = $state(false);
   let shortcutHelpOpen = $state(false);
   let themeCreatorOpen = $state(false);
+  let tutorialOpen = $state(false);
   let vaultPath = $state("");
 
   onMount(async () => {
     initTheme();
 
-    // Fetch vault path from API
+    // Fetch config and show tutorial on first launch
     try {
       const res = await fetch("/api/config");
       const config = await res.json();
       vaultPath = config.vaultPath;
+      if (!config.tutorialShown) {
+        tutorialOpen = true;
+      }
     } catch {}
 
     const handleSearch = () => { searchMode = "search"; searchOpen = true; };
     const handleSwitcher = () => { searchMode = "switcher"; searchOpen = true; };
     const handleShortcuts = () => { shortcutHelpOpen = true; };
+    const handleTutorial = () => { tutorialOpen = true; };
 
     const handleCreateTheme = () => { themeCreatorOpen = true; };
 
@@ -40,12 +46,14 @@
     window.addEventListener("prometheus:switcher", handleSwitcher);
     window.addEventListener("prometheus:shortcuts", handleShortcuts);
     window.addEventListener("prometheus:create-theme", handleCreateTheme);
+    window.addEventListener("prometheus:tutorial", handleTutorial);
 
     return () => {
       window.removeEventListener("prometheus:search", handleSearch);
       window.removeEventListener("prometheus:switcher", handleSwitcher);
       window.removeEventListener("prometheus:shortcuts", handleShortcuts);
       window.removeEventListener("prometheus:create-theme", handleCreateTheme);
+      window.removeEventListener("prometheus:tutorial", handleTutorial);
     };
   });
 
@@ -139,4 +147,9 @@
 <ThemeCreator
   open={themeCreatorOpen}
   onclose={() => (themeCreatorOpen = false)}
+/>
+
+<TutorialModal
+  open={tutorialOpen}
+  onclose={() => (tutorialOpen = false)}
 />
