@@ -21,6 +21,8 @@
 
   let editorContainer: HTMLDivElement;
   let view: EditorView | undefined;
+  let dragging = $state(false);
+  let dragCounter = 0;
 
   // Mutable ref so closures always access the latest callback
   const saveRef: { fn: ((content: string) => void) | undefined } = { fn: undefined };
@@ -130,17 +132,26 @@
     const handleSaveEvent = () => doSave();
     window.addEventListener("prometheus:save", handleSaveEvent);
 
-    // File drop handler
+    // File drop handler — use counter to handle child element enter/leave
+    editorContainer.addEventListener("dragenter", (e) => {
+      e.preventDefault();
+      dragCounter++;
+      dragging = true;
+    });
     editorContainer.addEventListener("dragover", (e) => {
       e.preventDefault();
-      editorContainer.classList.add("drop-active");
     });
     editorContainer.addEventListener("dragleave", () => {
-      editorContainer.classList.remove("drop-active");
+      dragCounter--;
+      if (dragCounter <= 0) {
+        dragCounter = 0;
+        dragging = false;
+      }
     });
     editorContainer.addEventListener("drop", async (e) => {
       e.preventDefault();
-      editorContainer.classList.remove("drop-active");
+      dragCounter = 0;
+      dragging = false;
       const files = e.dataTransfer?.files;
       if (files) {
         for (const file of files) {
@@ -190,10 +201,20 @@
   }
 </script>
 
-<div
-  bind:this={editorContainer}
-  class="h-full w-full overflow-auto"
-></div>
+<div class="relative h-full w-full">
+  <div
+    bind:this={editorContainer}
+    class="h-full w-full overflow-auto"
+  ></div>
+
+  {#if dragging}
+    <div class="drop-overlay">
+      <div class="drop-overlay-content">
+        <span class="text-sm font-medium">ファイルをドロップしてアップロード</span>
+      </div>
+    </div>
+  {/if}
+</div>
 
 <style>
   :global(.cm-editor) {
@@ -215,8 +236,25 @@
     padding: 0 4px;
   }
 
-  .drop-active {
-    outline: 2px dashed var(--color-primary);
-    outline-offset: -2px;
+  .drop-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+    border: 2px dashed var(--color-primary);
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .drop-overlay-content {
+    padding: 12px 24px;
+    border-radius: 8px;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-primary);
+    color: var(--color-primary-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 </style>
