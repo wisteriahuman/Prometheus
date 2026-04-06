@@ -71,6 +71,21 @@
 ⌘\\  サイドバー切替
 :w   保存（Vimモード）`,
     },
+    {
+      title: "Claude Code連携",
+      icon: Command,
+      content: `vaultディレクトリでClaude Codeを起動すると、
+ノートの構造を理解した上でAIが支援します。
+
+cd ~/my-notes && claude
+
+利用可能なスキル:
+• /create-note [タイトル] — ノート作成
+• /daily — デイリーノート作成
+• /link-check — 壊れたリンク検出
+
+.mdファイルはそのままAIへの入力になります。`,
+    },
   ];
 
   function next() {

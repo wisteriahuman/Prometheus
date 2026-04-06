@@ -57,6 +57,16 @@ graph LR
   C --> D[知識が繋がる]
 ` + "```" + `
 
+## Claude Code連携
+
+vaultディレクトリでClaude Codeを起動すると、ノート操作をAIが支援します:
+
+` + "```bash" + `
+cd ~/my-notes && claude
+` + "```" + `
+
+スキル: ` + "`/create-note`" + ` ` + "`/daily`" + ` ` + "`/link-check`" + `
+
 > *ノートは .md ファイルとして保存されます。Neovimで直接編集可能です。*
 `,
 	},
@@ -173,7 +183,41 @@ func InitVault(vault *Vault) bool {
 		os.WriteFile(fullPath, []byte(content), 0o644)
 	}
 
+	// Create Claude Code workspace config
+	initClaudeConfig(vault.Path())
+
+	// Create vault .gitignore
+	gitignorePath := filepath.Join(vault.Path(), ".gitignore")
+	if _, err := os.Stat(gitignorePath); os.IsNotExist(err) {
+		os.WriteFile(gitignorePath, []byte(vaultGitignore), 0o644)
+	}
+
 	return true
+}
+
+func initClaudeConfig(vaultPath string) {
+	claudeDir := filepath.Join(vaultPath, ".claude")
+	if _, err := os.Stat(claudeDir); err == nil {
+		return // Already exists, don't overwrite
+	}
+
+	// CLAUDE.md
+	os.WriteFile(filepath.Join(vaultPath, "CLAUDE.md"), []byte(claudeMd), 0o644)
+
+	// .claude/settings.json
+	os.MkdirAll(filepath.Join(claudeDir, "rules"), 0o755)
+	os.MkdirAll(filepath.Join(claudeDir, "skills", "create-note"), 0o755)
+	os.MkdirAll(filepath.Join(claudeDir, "skills", "daily"), 0o755)
+	os.MkdirAll(filepath.Join(claudeDir, "skills", "link-check"), 0o755)
+	os.MkdirAll(filepath.Join(claudeDir, "agents", "note-explorer"), 0o755)
+
+	os.WriteFile(filepath.Join(claudeDir, "settings.json"), []byte(claudeSettings), 0o644)
+	os.WriteFile(filepath.Join(claudeDir, "rules", "frontmatter.md"), []byte(ruleFrontmatter), 0o644)
+	os.WriteFile(filepath.Join(claudeDir, "rules", "wikilink.md"), []byte(ruleWikilink), 0o644)
+	os.WriteFile(filepath.Join(claudeDir, "skills", "create-note", "SKILL.md"), []byte(skillCreateNote), 0o644)
+	os.WriteFile(filepath.Join(claudeDir, "skills", "daily", "SKILL.md"), []byte(skillDaily), 0o644)
+	os.WriteFile(filepath.Join(claudeDir, "skills", "link-check", "SKILL.md"), []byte(skillLinkCheck), 0o644)
+	os.WriteFile(filepath.Join(claudeDir, "agents", "note-explorer", "AGENT.md"), []byte(agentNoteExplorer), 0o644)
 }
 
 func timeNow() string {
