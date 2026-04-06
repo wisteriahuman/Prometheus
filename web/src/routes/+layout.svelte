@@ -19,6 +19,7 @@
   let commandPaletteOpen = $state(false);
   let shortcutHelpOpen = $state(false);
   let themeCreatorOpen = $state(false);
+  let themeCreatorEdit = $state<any>(null);
   let tutorialOpen = $state(false);
   let vaultPath = $state("");
 
@@ -40,12 +41,17 @@
     const handleShortcuts = () => { shortcutHelpOpen = true; };
     const handleTutorial = () => { tutorialOpen = true; };
 
-    const handleCreateTheme = () => { themeCreatorOpen = true; };
+    const handleCreateTheme = () => { themeCreatorEdit = null; themeCreatorOpen = true; };
+    const handleEditTheme = (e: Event) => {
+      themeCreatorEdit = (e as CustomEvent).detail;
+      themeCreatorOpen = true;
+    };
 
     window.addEventListener("prometheus:search", handleSearch);
     window.addEventListener("prometheus:switcher", handleSwitcher);
     window.addEventListener("prometheus:shortcuts", handleShortcuts);
     window.addEventListener("prometheus:create-theme", handleCreateTheme);
+    window.addEventListener("prometheus:edit-theme", handleEditTheme);
     window.addEventListener("prometheus:tutorial", handleTutorial);
 
     return () => {
@@ -53,6 +59,7 @@
       window.removeEventListener("prometheus:switcher", handleSwitcher);
       window.removeEventListener("prometheus:shortcuts", handleShortcuts);
       window.removeEventListener("prometheus:create-theme", handleCreateTheme);
+      window.removeEventListener("prometheus:edit-theme", handleEditTheme);
       window.removeEventListener("prometheus:tutorial", handleTutorial);
     };
   });
@@ -146,7 +153,8 @@
 
 <ThemeCreator
   open={themeCreatorOpen}
-  onclose={() => (themeCreatorOpen = false)}
+  editTheme={themeCreatorEdit}
+  onclose={() => { themeCreatorOpen = false; themeCreatorEdit = null; }}
 />
 
 <TutorialModal

@@ -143,14 +143,18 @@
   ];
 
   let themeCommands = $derived(
-    getAllThemes().map((t) => ({
-      id: `theme-${t.slug}`,
-      title: t.name,
-      description: t.slug,
-      color: t.colors.primary,
-      category: "テーマ",
-      action: () => setTheme(t.slug),
-    })),
+    [
+      ...getAllThemes().map((t) => ({
+        id: `theme-${t.slug}`,
+        title: t.name,
+        description: t.isCustom ? `${t.slug} (カスタム)` : t.slug,
+        color: t.colors.primary,
+        category: "テーマ",
+        isCustom: t.isCustom ?? false,
+        themeRef: t,
+        action: () => setTheme(t.slug),
+      })),
+    ],
   );
 
   let filteredCommands = $derived(
@@ -272,11 +276,21 @@
             {/if}
             <div class="flex-1 min-w-0">
               <span class="text-sm">{cmd.title}</span>
+              {#if mode === "themes" && "isCustom" in cmd && cmd.isCustom}
+                <span class="ml-1 text-[10px] text-text-dim">カスタム</span>
+              {/if}
               {#if mode !== "themes" && cmd.description}
                 <span class="ml-2 text-xs text-text-dim">{cmd.description}</span>
               {/if}
             </div>
-            {#if "keybinding" in cmd && cmd.keybinding}
+            {#if mode === "themes" && "isCustom" in cmd && cmd.isCustom}
+              <button
+                onclick={(e) => { e.stopPropagation(); onclose(); window.dispatchEvent(new CustomEvent("prometheus:edit-theme", { detail: cmd.themeRef })); }}
+                class="shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] text-text-dim hover:border-primary hover:text-primary-light"
+              >
+                編集
+              </button>
+            {:else if "keybinding" in cmd && cmd.keybinding}
               <kbd class="shrink-0 rounded border border-border bg-bg-dark px-1.5 py-0.5 font-mono text-[10px] text-text-dim">
                 {cmd.keybinding}
               </kbd>

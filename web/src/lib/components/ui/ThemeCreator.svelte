@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { addCustomTheme, type PrometheusTheme, type ThemeColors, applyTheme, setTheme } from "$lib/stores/theme";
-  import { Palette, Save, X, RotateCcw } from "lucide-svelte";
+  import { addCustomTheme, removeCustomTheme, type PrometheusTheme, type ThemeColors, applyTheme, setTheme, initTheme } from "$lib/stores/theme";
+  import { Palette, Save, X, RotateCcw, Trash2 } from "lucide-svelte";
 
   interface Props {
     open: boolean;
+    editTheme?: PrometheusTheme | null;
     onclose: () => void;
   }
 
-  let { open, onclose }: Props = $props();
+  let { open, editTheme = null, onclose }: Props = $props();
 
   const defaultColors: ThemeColors = {
     bgDark: "#0f172a",
@@ -29,6 +30,8 @@
 
   let name = $state("My Theme");
   let colors = $state<ThemeColors>({ ...defaultColors });
+  let isEditing = $state(false);
+  let editingSlug = $state("");
 
   const colorFields: { key: keyof ThemeColors; label: string; group: string }[] = [
     { key: "bgDark", label: "背景", group: "背景" },
@@ -58,19 +61,17 @@
   });
 
   function preview() {
-    applyTheme({
-      slug: "custom-preview",
-      name,
-      colors,
-    });
+    applyTheme({ slug: "custom-preview", name, colors });
   }
 
   async function save() {
-    const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const slug = isEditing
+      ? editingSlug
+      : `custom-${name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`;
     if (!slug) return;
 
     const theme: PrometheusTheme = {
-      slug: `custom-${slug}`,
+      slug,
       name,
       colors: { ...colors },
       isCustom: true,
@@ -81,15 +82,38 @@
     onclose();
   }
 
+  async function deleteTheme() {
+    if (!isEditing || !editingSlug) return;
+    if (!confirm(`「${name}」を削除しますか？`)) return;
+
+    await removeCustomTheme(editingSlug);
+    await initTheme();
+    onclose();
+  }
+
   function reset() {
-    colors = { ...defaultColors };
-    name = "My Theme";
+    if (isEditing && editTheme) {
+      colors = { ...editTheme.colors };
+      name = editTheme.name;
+    } else {
+      colors = { ...defaultColors };
+      name = "My Theme";
+    }
   }
 
   $effect(() => {
     if (open) {
-      colors = { ...defaultColors };
-      name = "My Theme";
+      if (editTheme) {
+        name = editTheme.name;
+        colors = { ...editTheme.colors };
+        isEditing = true;
+        editingSlug = editTheme.slug;
+      } else {
+        colors = { ...defaultColors };
+        name = "My Theme";
+        isEditing = false;
+        editingSlug = "";
+      }
     }
   });
 </script>
@@ -99,18 +123,18 @@
     <button class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick={onclose} aria-label="閉じる"></button>
 
     <div class="relative z-10 w-full max-w-lg overflow-hidden rounded-xl border border-border bg-bg-card shadow-2xl">
-      <!-- Header -->
       <div class="flex items-center justify-between border-b border-border px-5 py-3">
         <div class="flex items-center gap-2">
           <Palette size={15} />
-          <h2 class="text-sm font-semibold text-text-main">カスタムテーマ作成</h2>
+          <h2 class="text-sm font-semibold text-text-main">
+            {isEditing ? "テーマを編集" : "カスタムテーマ作成"}
+          </h2>
         </div>
         <button onclick={onclose} class="text-text-dim hover:text-text-main">
           <X size={16} />
         </button>
       </div>
 
-      <!-- Name -->
       <div class="border-b border-border px-5 py-3">
         <label class="mb-1 block text-[11px] text-text-dim">テーマ名</label>
         <input
@@ -120,7 +144,6 @@
         />
       </div>
 
-      <!-- Colors -->
       <div class="max-h-72 overflow-y-auto px-5 py-3">
         {#each groups() as [groupName, fields]}
           <div class="mb-3">
@@ -142,15 +165,25 @@
         {/each}
       </div>
 
-      <!-- Footer -->
       <div class="flex items-center justify-between border-t border-border px-5 py-3">
-        <button
-          onclick={reset}
-          class="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-main"
-        >
-          <RotateCcw size={12} />
-          リセット
-        </button>
+        <div class="flex gap-2">
+          <button
+            onclick={reset}
+            class="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text-main"
+          >
+            <RotateCcw size={12} />
+            リセット
+          </button>
+          {#if isEditing}
+            <button
+              onclick={deleteTheme}
+              class="flex items-center gap-1.5 rounded-md border border-error/30 px-3 py-1.5 text-xs text-error hover:bg-error/10"
+            >
+              <Trash2 size={12} />
+              削除
+            </button>
+          {/if}
+        </div>
         <div class="flex gap-2">
           <button
             onclick={preview}
@@ -163,7 +196,7 @@
             class="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark"
           >
             <Save size={12} />
-            保存
+            {isEditing ? "更新" : "保存"}
           </button>
         </div>
       </div>
