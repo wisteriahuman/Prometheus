@@ -199,6 +199,12 @@ func (v *Vault) NoteExists(notePath string) bool {
 	return err == nil
 }
 
+// isHiddenNote returns true for config files that should not appear in the UI.
+func isHiddenNote(name string) bool {
+	upper := strings.ToUpper(name)
+	return upper == "CLAUDE.MD" || upper == "CLAUDE.LOCAL.MD"
+}
+
 func (v *Vault) ListNotes() ([]string, error) {
 	var notes []string
 	err := filepath.WalkDir(v.path, func(path string, d fs.DirEntry, err error) error {
@@ -208,7 +214,7 @@ func (v *Vault) ListNotes() ([]string, error) {
 		if d.IsDir() && strings.HasPrefix(d.Name(), ".") {
 			return filepath.SkipDir
 		}
-		if !d.IsDir() && strings.HasSuffix(d.Name(), ".md") && !strings.HasPrefix(d.Name(), ".") {
+		if !d.IsDir() && strings.HasSuffix(d.Name(), ".md") && !strings.HasPrefix(d.Name(), ".") && !isHiddenNote(d.Name()) {
 			rel, _ := filepath.Rel(v.path, path)
 			notes = append(notes, rel)
 		}
@@ -244,7 +250,7 @@ func (v *Vault) GetFileTree(dirPath string) ([]*FileEntry, error) {
 				IsDirectory: true,
 				Children:    children,
 			})
-		} else if strings.HasSuffix(entry.Name(), ".md") {
+		} else if strings.HasSuffix(entry.Name(), ".md") && !isHiddenNote(entry.Name()) {
 			result = append(result, &FileEntry{
 				Name:        entry.Name(),
 				Path:        entryRelPath,
