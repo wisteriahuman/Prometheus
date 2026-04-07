@@ -2,16 +2,20 @@ package service
 
 const claudeMd = `# Prometheus Vault
 
-このディレクトリはPrometheus（Markdownノートアプリ）のvault。
+このディレクトリ（CWD）がvaultのルート。全ノートのパスはここからの相対パス。
 Go製のWebサーバー ` + "`prm`" + ` がこのディレクトリを監視し、Web UIを提供する。
 
 ## ディレクトリ構造
 
 - ` + "`*.md`" + ` — ノート本体。YAMLフロントマター必須
+- ` + "`サブディレクトリ/*.md`" + ` — カテゴリ別ノート。自由にディレクトリ作成可
 - ` + "`daily/YYYY-MM-DD.md`" + ` — デイリーノート
 - ` + "`assets/`" + ` — 画像・PDFなどのアップロードファイル
 - ` + "`.prometheus/config.json`" + ` — vault設定。読み書き可能
 - ` + "`.prometheus/data.db`" + ` — SQLite FTS5インデックス。**変更禁止**
+
+ノートのパスはvaultルートからの相対パス（例: ` + "`resources/design-md.md`" + `）。
+Web UIのURLも同じパスになる: ` + "`/note/resources/design-md.md`" + `
 
 ## フロントマター
 
@@ -117,20 +121,31 @@ paths:
   - "**/*.md"
 ---
 
-# Wikilink規約
+# リンク規約
 
-## 構文
+## 内部リンク（wikilink）— vault内のノートへのリンク
 - ` + "`[[ファイル名]]`" + ` → そのファイルへのリンク
 - ` + "`[[ファイル名|表示テキスト]]`" + ` → 別名リンク
+- **vault内の.mdファイルへのリンクにのみ使う**
 
-## Slug解決
+### Slug解決
 - ファイル名（拡張子なし）で照合
 - 大文字小文字非区別
 - スペースとハイフンは相互変換（` + "`Graph View`" + ` = ` + "`graph-view`" + `）
 
-## 例
+### 例
 - ` + "`[[setup]]`" + ` → setup.md
 - ` + "`[[setup|セットアップガイド]]`" + ` → setup.md を「セットアップガイド」と表示
+- ` + "`[[resources/design-md]]`" + ` → resources/design-md.md（サブディレクトリ内のノート）
+
+## 外部リンク — URLへのリンク
+- 通常のMarkdown記法を使う: ` + "`[表示テキスト](https://...)`" + `
+- **` + "`[[https://...]]`" + ` は禁止**。wikilinkにURLを入れてはならない
+- 外部リンクは新タブで開かれる
+
+### 例
+- ` + "`[GitHub](https://github.com/example/repo)`" + `
+- ` + "`[公式ドキュメント](https://docs.example.com)`" + `
 `
 
 const skillCreateNote = `---

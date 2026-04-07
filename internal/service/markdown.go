@@ -40,7 +40,7 @@ func NewMarkdown() *Markdown {
 
 	policy := bluemonday.UGCPolicy()
 	policy.AllowAttrs("class").OnElements("a", "code", "span", "pre")
-	policy.AllowAttrs("data-slug").OnElements("a")
+	policy.AllowAttrs("data-slug", "target", "rel").OnElements("a")
 	policy.AllowAttrs("type", "checked", "disabled").OnElements("input")
 
 	return &Markdown{md: md, sanitize: policy}
@@ -56,6 +56,9 @@ func (m *Markdown) ToHTML(markdown string) string {
 
 	// Then: convert [[wikilinks]] in the HTML, but NOT inside <code> or <pre> tags
 	htmlStr = convertWikilinksInHTML(htmlStr)
+
+	// Mark external links with target="_blank"
+	htmlStr = markExternalLinks(htmlStr)
 
 	return htmlStr
 }
@@ -121,6 +124,14 @@ func convertWikilinksInHTML(html string) string {
 	}
 
 	return result.String()
+}
+
+var hrefRegex = regexp.MustCompile(`<a href="(https?://[^"]*)"`)
+
+// markExternalLinks adds target="_blank" rel="noopener noreferrer" to external links (http/https).
+// Wikilinks (class="wikilink") are internal and already have /note/ hrefs, so they are unaffected.
+func markExternalLinks(html string) string {
+	return hrefRegex.ReplaceAllString(html, `<a href="$1" target="_blank" rel="noopener noreferrer" class="external-link"`)
 }
 
 func removeFrontmatter(content string) string {

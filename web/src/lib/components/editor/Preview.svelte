@@ -156,6 +156,17 @@
     color: var(--color-accent-light);
   }
 
+  .prose :global(a.wikilink) {
+    text-decoration-style: dotted;
+  }
+
+  .prose :global(a.external-link)::after {
+    content: "↗";
+    font-size: 0.75em;
+    margin-left: 0.15em;
+    opacity: 0.6;
+  }
+
   .prose :global(ul) {
     list-style-type: disc;
     padding-left: 1.75em;
