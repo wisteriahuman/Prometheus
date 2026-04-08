@@ -3,6 +3,7 @@
   import { page } from "$app/stores";
   import EditorLayout from "$lib/components/editor/EditorLayout.svelte";
   import BacklinkPanel from "$lib/components/editor/BacklinkPanel.svelte";
+  import { isBareNoteContent, type ViewMode } from "$lib/utils/noteViewMode";
 
   interface DailyData {
     path: string;
@@ -86,6 +87,11 @@
     const dateStr = current.toISOString().slice(0, 10);
     loadDaily(dateStr);
   }
+
+  function initialViewMode(): ViewMode {
+    if (!data) return "preview";
+    return isBareNoteContent(data.content, data.title) ? "split" : "preview";
+  }
 </script>
 
 <svelte:head>
@@ -136,13 +142,16 @@
     </div>
 
     <div class="flex-1 overflow-hidden">
-      <EditorLayout
-        content={data.content}
-        {previewHtml}
-        vimMode={true}
-        onchange={handleChange}
-        onsave={handleSave}
-      />
+      {#key data.path}
+        <EditorLayout
+          content={data.content}
+          {previewHtml}
+          vimMode={true}
+          initialViewMode={initialViewMode()}
+          onchange={handleChange}
+          onsave={handleSave}
+        />
+      {/key}
     </div>
 
     <BacklinkPanel notePath={data.path} />

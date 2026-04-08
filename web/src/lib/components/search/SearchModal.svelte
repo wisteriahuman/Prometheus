@@ -21,7 +21,7 @@
   let selectedIndex = $state(0);
   let loading = $state(false);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
-  let inputEl: HTMLInputElement;
+  let inputEl: HTMLInputElement | undefined = $state(undefined);
 
   $effect(() => {
     if (open) {
@@ -114,7 +114,7 @@
       });
       if (res.ok) {
         onclose();
-        goto(`/note/${path}`);
+        goto(`/note/${path}?new=1`);
       }
     } catch {
       // failed

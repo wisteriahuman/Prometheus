@@ -23,18 +23,8 @@
   let tutorialOpen = $state(false);
   let vaultPath = $state("");
 
-  onMount(async () => {
+  onMount(() => {
     initTheme();
-
-    // Fetch config and show tutorial on first launch
-    try {
-      const res = await fetch("/api/config");
-      const config = await res.json();
-      vaultPath = config.vaultPath;
-      if (!config.tutorialShown) {
-        tutorialOpen = true;
-      }
-    } catch {}
 
     const handleSearch = () => { searchMode = "search"; searchOpen = true; };
     const handleSwitcher = () => { searchMode = "switcher"; searchOpen = true; };
@@ -53,6 +43,18 @@
     window.addEventListener("prometheus:create-theme", handleCreateTheme);
     window.addEventListener("prometheus:edit-theme", handleEditTheme);
     window.addEventListener("prometheus:tutorial", handleTutorial);
+
+    void (async () => {
+      // Fetch config and show tutorial on first launch
+      try {
+        const res = await fetch("/api/config");
+        const config = await res.json();
+        vaultPath = config.vaultPath;
+        if (!config.tutorialShown) {
+          tutorialOpen = true;
+        }
+      } catch {}
+    })();
 
     return () => {
       window.removeEventListener("prometheus:search", handleSearch);

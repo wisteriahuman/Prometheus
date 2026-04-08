@@ -9,6 +9,7 @@
   }
 
   let { open, editTheme = null, onclose }: Props = $props();
+  const themeNameInputId = "theme-name-input";
 
   const defaultColors: ThemeColors = {
     bgDark: "#0f172a",
@@ -136,8 +137,9 @@
       </div>
 
       <div class="border-b border-border px-5 py-3">
-        <label class="mb-1 block text-[11px] text-text-dim">テーマ名</label>
+        <label for={themeNameInputId} class="mb-1 block text-[11px] text-text-dim">テーマ名</label>
         <input
+          id={themeNameInputId}
           bind:value={name}
           class="w-full rounded border border-border bg-bg-dark px-3 py-1.5 text-sm text-text-main outline-none focus:border-primary"
           placeholder="My Theme"

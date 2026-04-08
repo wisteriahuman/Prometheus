@@ -229,6 +229,16 @@
       cmd.action();
     }
   }
+
+  function handleResultKeydown(
+    e: KeyboardEvent,
+    cmd: { action: () => void; id?: string },
+  ) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      executeCommand(cmd);
+    }
+  }
 </script>
 
 {#if open}
@@ -262,10 +272,13 @@
       <!-- Results -->
       <div class="max-h-72 overflow-y-auto py-1">
         {#each filteredCommands as cmd, i}
-          <button
+          <div
+            role="button"
+            tabindex="0"
             class="flex w-full items-center gap-3 px-4 py-2 text-left transition-colors
               {i === selectedIndex ? 'bg-primary/10 text-text-main' : 'text-text-muted hover:bg-bg-card-hover'}"
             onclick={() => executeCommand(cmd)}
+            onkeydown={(e) => handleResultKeydown(e, cmd)}
             onmouseenter={() => (selectedIndex = i)}
           >
             {#if mode === "themes" && "color" in cmd}
@@ -295,7 +308,7 @@
                 {cmd.keybinding}
               </kbd>
             {/if}
-          </button>
+          </div>
         {/each}
       </div>
 

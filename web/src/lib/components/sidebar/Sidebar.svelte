@@ -66,7 +66,7 @@
         newNoteName = "";
         showNewNote = false;
         await loadFileTree();
-        window.location.href = `/note/${path}`;
+        window.location.href = `/note/${path}?new=1`;
       }
     } catch (e) {
       console.error("Failed to create note:", e);

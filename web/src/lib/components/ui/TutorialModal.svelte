@@ -148,6 +148,8 @@ cd ~/my-notes && codex
           {#each steps as _, i}
             <button
               onclick={() => (step = i)}
+              aria-label={`${i + 1}番目のステップへ移動`}
+              title={`${i + 1} / ${steps.length}`}
               class="h-1.5 w-1.5 rounded-full transition-colors {i === step ? 'bg-primary' : 'bg-border hover:bg-text-dim'}"
             ></button>
           {/each}

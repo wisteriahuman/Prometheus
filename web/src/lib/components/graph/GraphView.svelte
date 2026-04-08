@@ -10,6 +10,7 @@
     forceCollide,
     forceX,
     forceY,
+    type Simulation,
     type SimulationNodeDatum,
     type SimulationLinkDatum,
   } from "d3-force";
@@ -22,6 +23,7 @@
     path: string;
     title: string;
     tags: string[];
+    componentId?: number;
   }
 
   interface GraphLink extends SimulationLinkDatum<GraphNode> {
@@ -73,7 +75,7 @@
     return { nodes, links };
   }
 
-  let currentSim: ReturnType<typeof forceSimulation> | null = null;
+  let currentSim: Simulation<GraphNode, undefined> | null = null;
 
   onMount(async () => {
     await loadGraph();
@@ -171,6 +173,87 @@
     return path + " Z";
   }
 
+  function getLinkNodeId(node: string | number | GraphNode): string {
+    if (typeof node === "string" || typeof node === "number") return String(node);
+    return node.id;
+  }
+
+  function computeConnectedComponents(nodes: GraphNode[], links: GraphLink[]): GraphNode[][] {
+    const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+    const adjacency = new Map<string, Set<string>>();
+
+    for (const node of nodes) {
+      adjacency.set(node.id, new Set());
+    }
+
+    for (const link of links) {
+      const source = getLinkNodeId(link.source);
+      const target = getLinkNodeId(link.target);
+      if (!nodeMap.has(source) || !nodeMap.has(target)) continue;
+      adjacency.get(source)?.add(target);
+      adjacency.get(target)?.add(source);
+    }
+
+    const visited = new Set<string>();
+    const components: GraphNode[][] = [];
+
+    for (const node of nodes) {
+      if (visited.has(node.id)) continue;
+
+      const stack = [node.id];
+      const component: GraphNode[] = [];
+      visited.add(node.id);
+
+      while (stack.length > 0) {
+        const currentId = stack.pop()!;
+        const currentNode = nodeMap.get(currentId);
+        if (!currentNode) continue;
+
+        component.push(currentNode);
+
+        for (const nextId of adjacency.get(currentId) ?? []) {
+          if (visited.has(nextId)) continue;
+          visited.add(nextId);
+          stack.push(nextId);
+        }
+      }
+
+      components.push(component);
+    }
+
+    return components.sort((a, b) => b.length - a.length);
+  }
+
+  function computeComponentCenters(
+    components: GraphNode[][],
+    width: number,
+    height: number,
+  ): Map<number, { x: number; y: number }> {
+    const cols = Math.max(1, Math.ceil(Math.sqrt(components.length)));
+    const rows = Math.max(1, Math.ceil(components.length / cols));
+    const maxSize = components.reduce((largest, component) => Math.max(largest, component.length), 1);
+    const baseSpacing = Math.max(
+      240,
+      Math.min(Math.min(width, height) * 0.45, 220 + Math.sqrt(maxSize) * 36),
+    );
+    const gapX = cols === 1 ? 0 : baseSpacing;
+    const gapY = rows === 1 ? 0 : baseSpacing * 0.85;
+    const centers = new Map<number, { x: number; y: number }>();
+
+    components.forEach((component, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const x = (col - (cols - 1) / 2) * gapX;
+      const y = (row - (rows - 1) / 2) * gapY;
+
+      for (const node of component) {
+        centers.set(node.componentId ?? index, { x, y });
+      }
+    });
+
+    return centers;
+  }
+
   function renderGraph(nodes: GraphNode[], links: GraphLink[]) {
     if (!svgEl || !container) return;
 
@@ -210,16 +293,35 @@
     }
     const tagEntries = Array.from(tagMap.entries());
 
-    // Spread out based on node count
-    const spread = Math.max(100, nodes.length * 15);
+    const components = computeConnectedComponents(nodes, links);
+    components.forEach((component, componentId) => {
+      for (const node of component) {
+        node.componentId = componentId;
+      }
+    });
+    const componentCenters = computeComponentCenters(components, width, height);
+
+    for (const node of nodes) {
+      const center = componentCenters.get(node.componentId ?? 0) ?? { x: 0, y: 0 };
+      if (node.x == null || node.y == null) {
+        node.x = center.x + (Math.random() - 0.5) * 60;
+        node.y = center.y + (Math.random() - 0.5) * 60;
+      }
+    }
 
     const simulation = forceSimulation<GraphNode>(nodes)
       .force("link", forceLink<GraphNode, GraphLink>(links).id((d) => d.id).distance(80).strength(0.5))
       .force("charge", forceManyBody().strength(-150))
       .force("center", forceCenter(0, 0).strength(0.04))
       .force("collide", forceCollide(28))
-      .force("x", forceX(0).strength(0.02))
-      .force("y", forceY(0).strength(0.02));
+      .force(
+        "x",
+        forceX<GraphNode>((d) => componentCenters.get(d.componentId ?? 0)?.x ?? 0).strength(0.08),
+      )
+      .force(
+        "y",
+        forceY<GraphNode>((d) => componentCenters.get(d.componentId ?? 0)?.y ?? 0).strength(0.08),
+      );
 
     currentSim = simulation;
 

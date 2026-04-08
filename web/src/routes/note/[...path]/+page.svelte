@@ -5,6 +5,7 @@
   import BacklinkPanel from "$lib/components/editor/BacklinkPanel.svelte";
   import TagEditor from "$lib/components/editor/TagEditor.svelte";
   import { getAllThemes, currentTheme } from "$lib/stores/theme";
+  import { isBareNoteContent, type ViewMode } from "$lib/utils/noteViewMode";
   import { get } from "svelte/store";
   import { FileText, Palette, Download } from "lucide-svelte";
 
@@ -31,6 +32,7 @@
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
   let editingTitle = $state(false);
   let showExportMenu = $state(false);
+  let autoCreatedNote = $state(false);
 
   function exportNote(format: string) {
     showExportMenu = false;
@@ -89,19 +91,24 @@
   let notePath = $derived($page.params.path);
 
   async function loadNote() {
+    const currentPath = notePath;
+    if (!currentPath) return;
+
     loading = true;
+    autoCreatedNote = false;
     try {
-      const res = await fetch(`/api/notes/${notePath}`);
+      const res = await fetch(`/api/notes/${currentPath}`);
       if (!res.ok) {
         // Auto-create if it doesn't exist and path ends with .md
-        if (res.status === 404 && notePath.endsWith(".md")) {
+        if (res.status === 404 && currentPath.endsWith(".md")) {
           await fetch("/api/notes", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ path: notePath }),
+            body: JSON.stringify({ path: currentPath }),
           });
-          const retry = await fetch(`/api/notes/${notePath}`);
+          const retry = await fetch(`/api/notes/${currentPath}`);
           if (retry.ok) {
+            autoCreatedNote = true;
             noteData = await retry.json();
           }
         }
@@ -219,6 +226,12 @@
     } finally {
       saving = false;
     }
+  }
+
+  function initialViewMode(): ViewMode {
+    if (!noteData) return "preview";
+    if ($page.url.searchParams.get("new") === "1" || autoCreatedNote) return "split";
+    return isBareNoteContent(noteData.content, noteData.frontmatter.title) ? "split" : "preview";
   }
 </script>
 
@@ -338,13 +351,16 @@
 
     <!-- Editor area: scoped to note theme -->
     <div class="flex-1 overflow-hidden" style={noteThemeStyle()}>
-      <EditorLayout
-        content={noteData.content}
-        {previewHtml}
-        vimMode={true}
-        onchange={handleChange}
-        onsave={handleSave}
-      />
+      {#key `${noteData.path}:${$page.url.searchParams.get("new") ?? ""}`}
+        <EditorLayout
+          content={noteData.content}
+          {previewHtml}
+          vimMode={true}
+          initialViewMode={initialViewMode()}
+          onchange={handleChange}
+          onsave={handleSave}
+        />
+      {/key}
     </div>
 
     <BacklinkPanel notePath={noteData.path} />

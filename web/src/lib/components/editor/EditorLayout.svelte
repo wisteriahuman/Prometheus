@@ -2,19 +2,21 @@
   import Editor from "./Editor.svelte";
   import Preview from "./Preview.svelte";
   import { PenLine, Columns2, Eye, Save } from "lucide-svelte";
+  import type { ViewMode } from "$lib/utils/noteViewMode";
 
   interface Props {
     content: string;
     previewHtml: string;
     vimMode?: boolean;
+    initialViewMode?: ViewMode;
     onchange?: (content: string) => void;
     onsave?: (content: string) => void;
   }
 
-  let { content, previewHtml, vimMode = true, onchange, onsave }: Props = $props();
+  let { content, previewHtml, vimMode = true, initialViewMode = "preview", onchange, onsave }: Props = $props();
 
-  type ViewMode = "split" | "editor" | "preview";
-  let viewMode: ViewMode = $state("split");
+  const resolveInitialViewMode = () => initialViewMode;
+  let viewMode: ViewMode = $state(resolveInitialViewMode());
 
   function cycleView() {
     const modes: ViewMode[] = ["split", "editor", "preview"];
@@ -30,7 +32,11 @@
   }
 
   function handleSave() {
-    // Dispatch event to let Editor component handle save with current content
+    if (viewMode === "preview") {
+      onsave?.(content);
+      return;
+    }
+
     window.dispatchEvent(new CustomEvent("prometheus:save"));
   }
 
