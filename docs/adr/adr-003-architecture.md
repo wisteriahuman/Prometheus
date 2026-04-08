@@ -80,6 +80,11 @@ prometheus/
 │   │   └── routes/              # SPA ルート
 │   ├── svelte.config.js         # adapter-static
 │   └── package.json
+├── vault/
+│   ├── CLAUDE.md                 # Claude Code向けガイド（生成物）
+│   ├── AGENTS.md                 # 汎用agent向けガイド（生成物）
+│   ├── .claude/                  # Claude用 rules/skills/agents
+│   └── .agents/                  # 汎用agent用 rules/skills/agents
 ├── docs/adr/                     # ADR
 ├── go.mod
 ├── Makefile
@@ -139,7 +144,7 @@ go-college-09-fujiiと同じ手動DI（コンストラクタ注入）パター�
 ## 議論 (Discussion)
 - フロントエンドとバックエンドの接続はREST API（19エンドポイント）。GraphQLやgRPCは不要（クライアントが1つしかない）
 - SPA配信は`//go:embed`で静的ファイルをバイナリに埋め込み、SPAフォールバック（存在しないパスはindex.htmlを返す）で実現
-- 起動時の初期化フロー: vault作成(初回) → DBマイグレーション → サンプルノート生成(初回) → 全ノートインデックス → HTTPサーバー起動
+- 起動時の初期化フロー: vault作成(初回) → DBマイグレーション → サンプルノート生成(初回) → AI/agent補助ファイル補完（`CLAUDE.md`, `AGENTS.md`, `.claude/`, `.agents/`）→ 全ノートインデックス → HTTPサーバー起動
 - 全文検索はSQLite FTS5（unicode61トークナイザー）を使用。日本語対応。検索レスポンスはサブミリ秒（163μs）。FTS5が利用できない場合はLIKEにフォールバック
 - テーマ設定（アプリ全体テーマ + カスタムテーマ）はvaultの`.prometheus/config.json`に保存。localStorageは使用しない。理由: 別ブラウザ・別端末からアクセスしても同じテーマが維持される。vaultが全設定の中心
 - グラフ描画はSVGを採用。Canvasは描画速度で優位だがテキストがぼやけ、ヒットテストが複雑。個人ノートアプリで現実的なノート数（100-500）ではSVGで十分な性能

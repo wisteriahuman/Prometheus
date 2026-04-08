@@ -60,6 +60,30 @@ prm dev ~/my-notes          # 同じvaultをWeb UIで表示
 
 AIとも相性がいい。`.md` ファイルだから `cat` でそのままLLMに渡せる。
 
+## AI / Agent連携
+
+Prometheusはvault内にAI向けの補助ファイルも生成する。
+
+- `CLAUDE.md` + `.claude/` — Claude Code向け
+- `AGENTS.md` + `.agents/` — 汎用agentワークフロー向け
+
+初回起動時に空のvaultへ自動生成される。既存vaultでも、起動時に不足分だけ補完される。
+
+```bash
+prm dev ~/my-notes
+cd ~/my-notes && claude
+cd ~/my-notes && codex
+```
+
+含まれる内容:
+
+- フロントマター規約
+- `[[wikilink]]` のルール
+- ノート作成 / デイリー / リンクチェック用スキル
+- ノート探索用の補助agent定義
+
+これらの設定ファイルはノート一覧には表示されない。
+
 ## ショートカット
 
 | キー | 機能 |

@@ -57,15 +57,17 @@ graph LR
   C --> D[知識が繋がる]
 ` + "```" + `
 
-## Claude Code連携
+## AI / Agent連携
 
-vaultディレクトリでClaude Codeを起動すると、ノート操作をAIが支援します:
+vaultディレクトリでClaude Code や agent 対応ツールを起動すると、ノート操作をAIが支援します:
 
 ` + "```bash" + `
 cd ~/my-notes && claude
+cd ~/my-notes && codex
 ` + "```" + `
 
-スキル: ` + "`/create-note`" + ` ` + "`/daily`" + ` ` + "`/link-check`" + `
+設定ファイル: ` + "`CLAUDE.md`" + ` ` + "`AGENTS.md`" + `  
+補助ディレクトリ: ` + "`.claude/`" + ` ` + "`.agents/`" + `
 
 > *ノートは .md ファイルとして保存されます。Neovimで直接編集可能です。*
 `,
@@ -183,8 +185,8 @@ func InitVault(vault *Vault) bool {
 		os.WriteFile(fullPath, []byte(content), 0o644)
 	}
 
-	// Create Claude Code workspace config
-	initClaudeConfig(vault.Path())
+	// Create AI workspace config
+	ensureAgentWorkspace(vault.Path())
 
 	// Create vault .gitignore
 	gitignorePath := filepath.Join(vault.Path(), ".gitignore")
@@ -195,29 +197,29 @@ func InitVault(vault *Vault) bool {
 	return true
 }
 
-func initClaudeConfig(vaultPath string) {
-	claudeDir := filepath.Join(vaultPath, ".claude")
-	if _, err := os.Stat(claudeDir); err == nil {
-		return // Already exists, don't overwrite
+func ensureAgentWorkspace(vaultPath string) {
+	ensureWorkspaceAssets(vaultPath, rootWorkspaceGuides())
+	ensureWorkspaceAssets(filepath.Join(vaultPath, ".claude"), claudeWorkspaceAssets())
+	ensureWorkspaceAssets(filepath.Join(vaultPath, ".agents"), genericAgentWorkspaceAssets())
+}
+
+func EnsureAgentWorkspacePublic(vaultPath string) {
+	ensureAgentWorkspace(vaultPath)
+}
+
+func writeIfMissing(path string, content []byte) {
+	if _, err := os.Stat(path); err == nil {
+		return
 	}
+	os.WriteFile(path, content, 0o644)
+}
 
-	// CLAUDE.md
-	os.WriteFile(filepath.Join(vaultPath, "CLAUDE.md"), []byte(claudeMd), 0o644)
-
-	// .claude/settings.json
-	os.MkdirAll(filepath.Join(claudeDir, "rules"), 0o755)
-	os.MkdirAll(filepath.Join(claudeDir, "skills", "create-note"), 0o755)
-	os.MkdirAll(filepath.Join(claudeDir, "skills", "daily"), 0o755)
-	os.MkdirAll(filepath.Join(claudeDir, "skills", "link-check"), 0o755)
-	os.MkdirAll(filepath.Join(claudeDir, "agents", "note-explorer"), 0o755)
-
-	os.WriteFile(filepath.Join(claudeDir, "settings.json"), []byte(claudeSettings), 0o644)
-	os.WriteFile(filepath.Join(claudeDir, "rules", "frontmatter.md"), []byte(ruleFrontmatter), 0o644)
-	os.WriteFile(filepath.Join(claudeDir, "rules", "wikilink.md"), []byte(ruleWikilink), 0o644)
-	os.WriteFile(filepath.Join(claudeDir, "skills", "create-note", "SKILL.md"), []byte(skillCreateNote), 0o644)
-	os.WriteFile(filepath.Join(claudeDir, "skills", "daily", "SKILL.md"), []byte(skillDaily), 0o644)
-	os.WriteFile(filepath.Join(claudeDir, "skills", "link-check", "SKILL.md"), []byte(skillLinkCheck), 0o644)
-	os.WriteFile(filepath.Join(claudeDir, "agents", "note-explorer", "AGENT.md"), []byte(agentNoteExplorer), 0o644)
+func ensureWorkspaceAssets(basePath string, assets []workspaceAsset) {
+	for _, asset := range assets {
+		fullPath := filepath.Join(basePath, asset.RelativePath)
+		os.MkdirAll(filepath.Dir(fullPath), 0o755)
+		writeIfMissing(fullPath, []byte(asset.Content))
+	}
 }
 
 func timeNow() string {

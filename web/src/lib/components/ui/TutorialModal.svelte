@@ -72,17 +72,17 @@
 :w   保存（Vimモード）`,
     },
     {
-      title: "Claude Code連携",
+      title: "AI / Agent連携",
       icon: Command,
-      content: `vaultディレクトリでClaude Codeを起動すると、
+      content: `vaultディレクトリでClaude Code や agent 対応ツールを起動すると、
 ノートの構造を理解した上でAIが支援します。
 
 cd ~/my-notes && claude
+cd ~/my-notes && codex
 
-利用可能なスキル:
-• /create-note [タイトル] — ノート作成
-• /daily — デイリーノート作成
-• /link-check — 壊れたリンク検出
+生成される設定:
+• CLAUDE.md / .claude/
+• AGENTS.md / .agents/
 
 .mdファイルはそのままAIへの入力になります。`,
     },

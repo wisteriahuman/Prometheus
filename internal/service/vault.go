@@ -202,7 +202,7 @@ func (v *Vault) NoteExists(notePath string) bool {
 // isHiddenNote returns true for config files that should not appear in the UI.
 func isHiddenNote(name string) bool {
 	upper := strings.ToUpper(name)
-	return upper == "CLAUDE.MD" || upper == "CLAUDE.LOCAL.MD"
+	return upper == "CLAUDE.MD" || upper == "CLAUDE.LOCAL.MD" || upper == "AGENTS.MD" || upper == "AGENTS.LOCAL.MD"
 }
 
 func (v *Vault) ListNotes() ([]string, error) {

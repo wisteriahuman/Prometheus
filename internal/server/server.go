@@ -32,6 +32,7 @@ func NewServer(cfg *config.Config) *Server {
 	if service.InitVault(vault) {
 		log.Println("Initialized vault with sample notes")
 	}
+	service.EnsureAgentWorkspacePublic(vault.Path())
 
 	// Index all notes on startup
 	count := indexer.IndexAll()
