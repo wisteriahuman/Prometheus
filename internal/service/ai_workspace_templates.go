@@ -10,6 +10,13 @@ type workspaceAsset struct {
 	Content      string
 }
 
+type skillMetadata struct {
+	Name         string
+	Description  string
+	ArgumentHint string
+	AllowedTools string
+}
+
 func rootWorkspaceGuides() []workspaceAsset {
 	return []workspaceAsset{
 		{RelativePath: "CLAUDE.md", Content: buildClaudeWorkspaceGuide()},
@@ -22,9 +29,9 @@ func claudeWorkspaceAssets() []workspaceAsset {
 		{RelativePath: "settings.json", Content: claudeSettings},
 		{RelativePath: "rules/frontmatter.md", Content: frontmatterRule},
 		{RelativePath: "rules/wikilink.md", Content: wikilinkRule},
-		{RelativePath: "skills/create-note/SKILL.md", Content: buildClaudeSkill("create-note", "フロントマター付きの新規ノートを作成", "[title]", "Read Write Glob", createNoteSkillBody(true))},
-		{RelativePath: "skills/daily/SKILL.md", Content: buildClaudeSkill("daily", "今日のデイリーノートを作成または開く", "", "Read Write Glob", dailySkillBody(true))},
-		{RelativePath: "skills/link-check/SKILL.md", Content: buildClaudeSkill("link-check", "壊れたwikilinkを検出し修復提案する", "", "Read Glob Grep", linkCheckSkillBody(true))},
+		{RelativePath: "skills/create-note/SKILL.md", Content: buildSkillDocument(claudeCreateNoteMetadata(), createNoteSkillBody(true))},
+		{RelativePath: "skills/daily/SKILL.md", Content: buildSkillDocument(claudeDailyMetadata(), dailySkillBody(true))},
+		{RelativePath: "skills/link-check/SKILL.md", Content: buildSkillDocument(claudeLinkCheckMetadata(), linkCheckSkillBody(true))},
 		{RelativePath: "agents/note-explorer/AGENT.md", Content: noteExplorerAgent},
 	}
 }
@@ -33,9 +40,9 @@ func genericAgentWorkspaceAssets() []workspaceAsset {
 	return []workspaceAsset{
 		{RelativePath: "rules/frontmatter.md", Content: frontmatterRule},
 		{RelativePath: "rules/wikilink.md", Content: wikilinkRule},
-		{RelativePath: "skills/create-note/SKILL.md", Content: buildAgentSkill("create-note", createNoteSkillBody(false))},
-		{RelativePath: "skills/daily/SKILL.md", Content: buildAgentSkill("daily", dailySkillBody(false))},
-		{RelativePath: "skills/link-check/SKILL.md", Content: buildAgentSkill("link-check", linkCheckSkillBody(false))},
+		{RelativePath: "skills/create-note/SKILL.md", Content: buildSkillDocument(agentCreateNoteMetadata(), createNoteSkillBody(false))},
+		{RelativePath: "skills/daily/SKILL.md", Content: buildSkillDocument(agentDailyMetadata(), dailySkillBody(false))},
+		{RelativePath: "skills/link-check/SKILL.md", Content: buildSkillDocument(agentLinkCheckMetadata(), linkCheckSkillBody(false))},
 		{RelativePath: "agents/note-explorer/AGENT.md", Content: noteExplorerAgent},
 	}
 }
@@ -146,22 +153,20 @@ tags: [tag1, tag2]
 	)
 }
 
-func buildClaudeSkill(name, description, argumentHint, allowedTools, body string) string {
+func buildSkillDocument(meta skillMetadata, body string) string {
 	var b strings.Builder
 	b.WriteString("---\n")
-	b.WriteString(fmt.Sprintf("name: %s\n", name))
-	b.WriteString(fmt.Sprintf("description: %s\n", description))
-	if argumentHint != "" {
-		b.WriteString(fmt.Sprintf("argument-hint: %q\n", argumentHint))
+	b.WriteString(fmt.Sprintf("name: %q\n", meta.Name))
+	b.WriteString(fmt.Sprintf("description: %q\n", meta.Description))
+	if meta.ArgumentHint != "" {
+		b.WriteString(fmt.Sprintf("argument-hint: %q\n", meta.ArgumentHint))
 	}
-	b.WriteString(fmt.Sprintf("allowed-tools: %s\n", allowedTools))
+	if meta.AllowedTools != "" {
+		b.WriteString(fmt.Sprintf("allowed-tools: %q\n", meta.AllowedTools))
+	}
 	b.WriteString("---\n\n")
 	b.WriteString(body)
 	return b.String()
-}
-
-func buildAgentSkill(name, body string) string {
-	return fmt.Sprintf("# %s\n\n%s", name, body)
 }
 
 func createNoteSkillBody(includeClaudeDetails bool) string {
@@ -264,6 +269,56 @@ func fenced(lang, body string) string {
 		return "```\n" + body + "\n```"
 	}
 	return "```" + lang + "\n" + body + "\n```"
+}
+
+func claudeCreateNoteMetadata() skillMetadata {
+	return skillMetadata{
+		Name:         "create-note",
+		Description:  "フロントマター付きの新規ノートを作成",
+		ArgumentHint: "[title]",
+		AllowedTools: "Read Write Glob",
+	}
+}
+
+func claudeDailyMetadata() skillMetadata {
+	return skillMetadata{
+		Name:         "daily",
+		Description:  "今日のデイリーノートを作成または開く",
+		AllowedTools: "Read Write Glob",
+	}
+}
+
+func claudeLinkCheckMetadata() skillMetadata {
+	return skillMetadata{
+		Name:         "link-check",
+		Description:  "壊れたwikilinkを検出し修復提案する",
+		AllowedTools: "Read Glob Grep",
+	}
+}
+
+func agentCreateNoteMetadata() skillMetadata {
+	return skillMetadata{
+		Name:         "create-note",
+		Description:  "Create a new note with Prometheus frontmatter.",
+		ArgumentHint: "[title]",
+		AllowedTools: "Read Write Glob",
+	}
+}
+
+func agentDailyMetadata() skillMetadata {
+	return skillMetadata{
+		Name:         "daily",
+		Description:  "Create or open today's daily note.",
+		AllowedTools: "Read Write Glob",
+	}
+}
+
+func agentLinkCheckMetadata() skillMetadata {
+	return skillMetadata{
+		Name:         "link-check",
+		Description:  "Find broken wikilinks in the vault and suggest fixes.",
+		AllowedTools: "Read Glob Grep",
+	}
 }
 
 const claudeSettings = `{
