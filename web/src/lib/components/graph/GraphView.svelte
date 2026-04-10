@@ -3,13 +3,12 @@
   import { goto } from "$app/navigation";
   import { Search, Filter, Eye, EyeOff } from "lucide-svelte";
   import {
+    type Force,
     forceSimulation,
     forceLink,
     forceManyBody,
     forceCenter,
     forceCollide,
-    forceX,
-    forceY,
     type Simulation,
     type SimulationNodeDatum,
     type SimulationLinkDatum,
@@ -42,6 +41,7 @@
   let showFilters = $state(false);
   let showHulls = $state(true);
   let showTagLabels = $state(false);
+  let positionCache = $state<Map<string, { x: number; y: number }>>(new Map());
 
   const TAG_COLORS = [
     { fill: "rgba(99, 102, 241, 0.07)", stroke: "rgba(99, 102, 241, 0.25)" },
@@ -110,7 +110,6 @@
     if (!svgEl || !container || allNodes.length === 0) return;
     if (currentSim) currentSim.stop();
     const { nodes, links } = getFilteredData();
-    for (const n of nodes) { n.x = undefined; n.y = undefined; n.vx = undefined; n.vy = undefined; }
     renderGraph(nodes, links);
   }
 
@@ -221,7 +220,36 @@
       components.push(component);
     }
 
-    return components.sort((a, b) => b.length - a.length);
+    return components.sort((a, b) => {
+      const sizeDiff = b.length - a.length;
+      if (sizeDiff !== 0) return sizeDiff;
+
+      const aKey = [...a].map((node) => node.path).sort()[0] ?? "";
+      const bKey = [...b].map((node) => node.path).sort()[0] ?? "";
+      return aKey.localeCompare(bKey);
+    });
+  }
+
+  function hashString(value: string): number {
+    let hash = 2166136261;
+    for (let i = 0; i < value.length; i++) {
+      hash ^= value.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  function getDeterministicNodePosition(
+    node: GraphNode,
+    center: { x: number; y: number },
+  ): { x: number; y: number } {
+    const hash = hashString(node.id);
+    const angle = ((hash % 360) * Math.PI) / 180;
+    const radius = 24 + ((hash >> 9) % 56);
+    return {
+      x: center.x + Math.cos(angle) * radius,
+      y: center.y + Math.sin(angle) * radius,
+    };
   }
 
   function computeComponentCenters(
@@ -252,6 +280,98 @@
     });
 
     return centers;
+  }
+
+  function createComponentCollisionForce(
+    components: GraphNode[][],
+    padding = 72,
+    strength = 0.9,
+  ): Force<GraphNode, GraphLink> {
+    return (alpha: number) => {
+      const circles = components
+        .map((component, index) => {
+          const nodes = component.filter((node) => node.x != null && node.y != null);
+          if (nodes.length === 0) return null;
+
+          const x = nodes.reduce((sum, node) => sum + (node.x ?? 0), 0) / nodes.length;
+          const y = nodes.reduce((sum, node) => sum + (node.y ?? 0), 0) / nodes.length;
+
+          let radius = 32;
+          for (const node of nodes) {
+            const dx = (node.x ?? x) - x;
+            const dy = (node.y ?? y) - y;
+            radius = Math.max(radius, Math.hypot(dx, dy) + 30);
+          }
+
+          return {
+            index,
+            nodes,
+            x,
+            y,
+            radius: radius + padding,
+          };
+        })
+        .filter((circle): circle is NonNullable<typeof circle> => circle !== null);
+
+      for (let i = 0; i < circles.length; i++) {
+        for (let j = i + 1; j < circles.length; j++) {
+          const a = circles[i];
+          const b = circles[j];
+
+          let dx = b.x - a.x;
+          let dy = b.y - a.y;
+          let distance = Math.hypot(dx, dy);
+          const minDistance = a.radius + b.radius;
+
+          if (distance >= minDistance) continue;
+
+          if (distance < 1) {
+            const angle = (((a.index + 1) * 37 + (b.index + 1) * 17) % 360) * (Math.PI / 180);
+            dx = Math.cos(angle);
+            dy = Math.sin(angle);
+            distance = 1;
+          }
+
+          const overlap = minDistance - distance;
+          const nx = dx / distance;
+          const ny = dy / distance;
+          const shift = overlap * alpha * strength;
+          const aShare = b.nodes.length / (a.nodes.length + b.nodes.length);
+          const bShare = a.nodes.length / (a.nodes.length + b.nodes.length);
+
+          for (const node of a.nodes) {
+            node.x = (node.x ?? 0) - nx * shift * aShare;
+            node.y = (node.y ?? 0) - ny * shift * aShare;
+          }
+
+          for (const node of b.nodes) {
+            node.x = (node.x ?? 0) + nx * shift * bShare;
+            node.y = (node.y ?? 0) + ny * shift * bShare;
+          }
+        }
+      }
+    };
+  }
+
+  function createComponentCohesionForce(
+    components: GraphNode[][],
+    strength = 0.08,
+  ): Force<GraphNode, GraphLink> {
+    return (alpha: number) => {
+      for (const component of components) {
+        const nodes = component.filter((node) => node.x != null && node.y != null);
+        if (nodes.length <= 1) continue;
+
+        const cx = nodes.reduce((sum, node) => sum + (node.x ?? 0), 0) / nodes.length;
+        const cy = nodes.reduce((sum, node) => sum + (node.y ?? 0), 0) / nodes.length;
+
+        for (const node of nodes) {
+          if (node.fx != null || node.fy != null) continue;
+          node.vx = (node.vx ?? 0) + (cx - (node.x ?? cx)) * strength * alpha;
+          node.vy = (node.vy ?? 0) + (cy - (node.y ?? cy)) * strength * alpha;
+        }
+      }
+    };
   }
 
   function renderGraph(nodes: GraphNode[], links: GraphLink[]) {
@@ -303,10 +423,12 @@
 
     for (const node of nodes) {
       const center = componentCenters.get(node.componentId ?? 0) ?? { x: 0, y: 0 };
-      if (node.x == null || node.y == null) {
-        node.x = center.x + (Math.random() - 0.5) * 60;
-        node.y = center.y + (Math.random() - 0.5) * 60;
-      }
+      const cached = positionCache.get(node.id);
+      const initial = cached ?? getDeterministicNodePosition(node, center);
+      node.x = initial.x;
+      node.y = initial.y;
+      node.vx = 0;
+      node.vy = 0;
     }
 
     const simulation = forceSimulation<GraphNode>(nodes)
@@ -314,14 +436,8 @@
       .force("charge", forceManyBody().strength(-150))
       .force("center", forceCenter(0, 0).strength(0.04))
       .force("collide", forceCollide(28))
-      .force(
-        "x",
-        forceX<GraphNode>((d) => componentCenters.get(d.componentId ?? 0)?.x ?? 0).strength(0.08),
-      )
-      .force(
-        "y",
-        forceY<GraphNode>((d) => componentCenters.get(d.componentId ?? 0)?.y ?? 0).strength(0.08),
-      );
+      .force("component-cohere", createComponentCohesionForce(components))
+      .force("component-collide", createComponentCollisionForce(components));
 
     currentSim = simulation;
 
@@ -399,6 +515,13 @@
         .attr("x1", (d) => (d.source as GraphNode).x ?? 0).attr("y1", (d) => (d.source as GraphNode).y ?? 0)
         .attr("x2", (d) => (d.target as GraphNode).x ?? 0).attr("y2", (d) => (d.target as GraphNode).y ?? 0);
       nodeEl.attr("transform", (d) => `translate(${d.x ?? 0},${d.y ?? 0})`);
+
+      positionCache = new Map(
+        nodes.map((node) => [
+          node.id,
+          { x: node.x ?? 0, y: node.y ?? 0 },
+        ]),
+      );
 
       if (showHulls && hulls) {
         hulls.attr("d", ([, gn]: [string, GraphNode[]]) => {

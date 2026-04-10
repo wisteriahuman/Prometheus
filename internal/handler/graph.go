@@ -30,7 +30,7 @@ func (h *GraphHandler) Graph(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch all notes
-	rows, err := h.db.Query("SELECT id, path, title FROM notes")
+	rows, err := h.db.Query("SELECT id, path, title FROM notes ORDER BY path")
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to query notes")
 		return
